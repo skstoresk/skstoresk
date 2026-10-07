@@ -1,18 +1,19 @@
-/* ============ SK STORE — dark + gold premium theme ============ */
+/* ============ SK STORE — themeable styles ============ */
+/* Colors lib/themes.py se CSS variables ki surat me ate hain.
+   Base dark theme .streamlit/config.toml me hai taake
+   Streamlit ke native widgets ka text hamesha readable rahe. */
 .stApp {
-    background: radial-gradient(1200px 600px at 20% -5%, #1c1a12 0%, #0f0f14 55%) fixed;
-    color: #f2f2f2;
+    background: radial-gradient(1000px 500px at 15% -5%, var(--sk-glow, rgba(245,196,81,.07)) 0%, transparent 60%) fixed;
 }
 section[data-testid="stSidebar"] { display: none; }
 
 .sk-logo {
     font-size: 30px;
     font-weight: 800;
-    color: #f5c451;
+    color: var(--sk-accent, #f5c451);
     letter-spacing: 1px;
     padding-top: 4px;
 }
-.sk-logo small { color: #aaa; font-weight: 400; font-size: 14px; }
 
 h1, h2, h3 { color: #f7f7f7 !important; }
 
@@ -23,8 +24,8 @@ h1, h2, h3 { color: #f7f7f7 !important; }
     margin: 10px 0 18px 0;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(245,196,81,.35);
-    background: linear-gradient(100deg, #221d10 0%, #141318 70%);
+    border: 1px solid var(--sk-accent-border, rgba(245,196,81,.35));
+    background: linear-gradient(100deg, #1a1a20 0%, #121318 70%);
 }
 .sk-banner-discount {
     background: linear-gradient(100deg, #3a1414 0%, #161214 70%);
@@ -40,9 +41,9 @@ h1, h2, h3 { color: #f7f7f7 !important; }
     mask-image: linear-gradient(90deg, transparent, black 40%);
     -webkit-mask-image: linear-gradient(90deg, transparent, black 40%);
 }
-.sk-banner-kicker { color: #f5c451; font-weight: 700; font-size: 13px; letter-spacing: 2px; }
-.sk-banner-title { font-size: 30px; font-weight: 800; margin: 6px 0; color: #fff; }
-.sk-banner-sub { color: #cfcfcf; font-size: 16px; }
+.sk-banner-kicker { color: var(--sk-accent, #f5c451); font-weight: 700; font-size: 13px; letter-spacing: 2px; }
+.sk-banner-title { font-size: 30px; font-weight: 800; margin: 6px 0; color: #ffffff; }
+.sk-banner-sub { color: #d8d8d8; font-size: 16px; }
 
 /* badges & prices */
 .sk-badge {
@@ -51,31 +52,31 @@ h1, h2, h3 { color: #f7f7f7 !important; }
 }
 .sk-badge-new { background: #1db954; color: #fff; }
 .sk-badge-disc { background: #e63946; color: #fff; }
-.sk-price { color: #f5c451; font-weight: 800; font-size: 18px; }
-.sk-price-big { color: #f5c451; font-weight: 800; font-size: 30px; }
-.sk-price-old { color: #999; text-decoration: line-through; font-size: 14px; margin-left: 6px; }
-.sk-out { color: #ff7070; font-weight: 700; }
+.sk-price { color: var(--sk-accent, #f5c451); font-weight: 800; font-size: 18px; }
+.sk-price-big { color: var(--sk-accent, #f5c451); font-weight: 800; font-size: 30px; }
+.sk-price-old { color: #c2c2c2; text-decoration: line-through; font-size: 14px; margin-left: 6px; }
+.sk-out { color: #ff8080; font-weight: 700; }
 
 /* buttons */
 .stButton > button[kind="primary"] {
-    background: linear-gradient(180deg, #f5c451, #d99a1f);
-    color: #1a1a1a; border: none; font-weight: 700;
+    background: linear-gradient(180deg, var(--sk-accent, #f5c451), var(--sk-accent-dark, #d99a1f));
+    color: #141414; border: none; font-weight: 700;
 }
 .stButton > button { border-radius: 10px; }
 
 /* footer */
 .sk-footer {
     text-align: center;
-    color: #bdbdbd;
+    color: #c9c9c9;
     padding: 26px 0 14px 0;
     margin-top: 30px;
-    border-top: 1px solid rgba(245,196,81,.25);
+    border-top: 1px solid var(--sk-accent-soft, rgba(245,196,81,.18));
     font-size: 14px;
 }
 
 /* product cards */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: rgba(245,196,81,.18) !important;
+    border-color: var(--sk-accent-soft, rgba(245,196,81,.18)) !important;
     background: rgba(255,255,255,.03);
     border-radius: 14px;
 }
