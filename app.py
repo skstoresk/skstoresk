@@ -1,7 +1,8 @@
 """SK STORE — main app (Streamlit + Supabase)."""
 import streamlit as st
 
-from lib import config
+from lib import config, db
+from lib.themes import DEFAULT_THEME, theme_keys, theme_label, theme_vars_css
 
 st.set_page_config(
     page_title=f"{config.STORE_NAME} — Online Shopping",
@@ -26,6 +27,13 @@ if not config.supabase_configured():
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
+# ---------- theme: visitor picker overrides admin default ----------
+admin_theme = db.get_setting("site_theme", DEFAULT_THEME)
+if admin_theme not in theme_keys():
+    admin_theme = DEFAULT_THEME
+current_theme = st.session_state.get("site_theme") or admin_theme
+st.markdown(theme_vars_css(current_theme), unsafe_allow_html=True)
+
 home = st.Page("views/home.py", title="Home", icon="🏠", default=True)
 product = st.Page("views/product.py", title="Product", icon="📦", url_path="product")
 cart = st.Page("views/cart.py", title="Cart", icon="🛒", url_path="cart")
@@ -40,7 +48,7 @@ pg = st.navigation(
 
 # ---------- custom top header ----------
 cart_count = sum(st.session_state.cart.values())
-h1, h2, h3, h4 = st.columns([5, 1.2, 1.4, 1.2])
+h1, h2, h3, h4, h5 = st.columns([4.2, 1.2, 1.4, 1.2, 1.8])
 with h1:
     st.markdown(f"<div class='sk-logo'>🛍️ {config.STORE_NAME}</div>", unsafe_allow_html=True)
 with h2:
@@ -52,6 +60,18 @@ with h3:
 with h4:
     if st.button("🚚 Track", use_container_width=True, key="nav_track"):
         st.switch_page("views/track.py")
+with h5:
+    picked = st.selectbox(
+        "Theme",
+        theme_keys(),
+        index=theme_keys().index(current_theme),
+        format_func=theme_label,
+        label_visibility="collapsed",
+        key="theme_picker",
+    )
+    if picked != current_theme:
+        st.session_state.site_theme = picked
+        st.rerun()
 st.divider()
 
 pg.run()
