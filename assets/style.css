@@ -1,21 +1,21 @@
 /* ============ SK STORE — themeable styles ============ */
 /* Colors lib/themes.py se CSS variables ki surat me ate hain.
-   Base dark theme .streamlit/config.toml me hai taake
+   Base light theme .streamlit/config.toml me hai taake
    Streamlit ke native widgets ka text hamesha readable rahe. */
 .stApp {
-    background: radial-gradient(1000px 500px at 15% -5%, var(--sk-glow, rgba(245,196,81,.07)) 0%, transparent 60%) fixed;
+    background: radial-gradient(1000px 500px at 15% -5%, var(--sk-glow, rgba(201,150,46,.08)) 0%, transparent 60%) fixed;
 }
 section[data-testid="stSidebar"] { display: none; }
 
 .sk-logo {
     font-size: 30px;
     font-weight: 800;
-    color: var(--sk-accent, #f5c451);
+    color: var(--sk-accent, #c9962e);
     letter-spacing: 1px;
     padding-top: 4px;
 }
 
-h1, h2, h3 { color: #f7f7f7 !important; }
+h1, h2, h3 { color: #1a1a1a !important; }
 
 /* banners */
 .sk-banner {
@@ -24,16 +24,16 @@ h1, h2, h3 { color: #f7f7f7 !important; }
     margin: 10px 0 18px 0;
     position: relative;
     overflow: hidden;
-    border: 1px solid var(--sk-accent-border, rgba(245,196,81,.35));
-    background: linear-gradient(100deg, #1a1a20 0%, #121318 70%);
+    border: 1px solid var(--sk-accent-border, rgba(201,150,46,.4));
+    background: linear-gradient(100deg, #fff9ec 0%, #ffffff 70%);
 }
 .sk-banner-discount {
-    background: linear-gradient(100deg, #3a1414 0%, #161214 70%);
-    border-color: rgba(255,110,110,.4);
+    background: linear-gradient(100deg, #fdeeee 0%, #ffffff 70%);
+    border-color: rgba(230,57,70,.35);
 }
 .sk-banner-announcement {
-    background: linear-gradient(100deg, #12233a 0%, #12141a 70%);
-    border-color: rgba(110,170,255,.35);
+    background: linear-gradient(100deg, #e9f2fd 0%, #ffffff 70%);
+    border-color: rgba(47,127,209,.35);
 }
 .sk-banner-img {
     position: absolute; right: 0; top: 0; height: 100%; width: 38%;
@@ -41,9 +41,9 @@ h1, h2, h3 { color: #f7f7f7 !important; }
     mask-image: linear-gradient(90deg, transparent, black 40%);
     -webkit-mask-image: linear-gradient(90deg, transparent, black 40%);
 }
-.sk-banner-kicker { color: var(--sk-accent, #f5c451); font-weight: 700; font-size: 13px; letter-spacing: 2px; }
-.sk-banner-title { font-size: 30px; font-weight: 800; margin: 6px 0; color: #ffffff; }
-.sk-banner-sub { color: #d8d8d8; font-size: 16px; }
+.sk-banner-kicker { color: var(--sk-accent, #c9962e); font-weight: 700; font-size: 13px; letter-spacing: 2px; }
+.sk-banner-title { font-size: 30px; font-weight: 800; margin: 6px 0; color: #1a1a1a; }
+.sk-banner-sub { color: #555555; font-size: 16px; }
 
 /* badges & prices */
 .sk-badge {
@@ -52,31 +52,32 @@ h1, h2, h3 { color: #f7f7f7 !important; }
 }
 .sk-badge-new { background: #1db954; color: #fff; }
 .sk-badge-disc { background: #e63946; color: #fff; }
-.sk-price { color: var(--sk-accent, #f5c451); font-weight: 800; font-size: 18px; }
-.sk-price-big { color: var(--sk-accent, #f5c451); font-weight: 800; font-size: 30px; }
-.sk-price-old { color: #c2c2c2; text-decoration: line-through; font-size: 14px; margin-left: 6px; }
-.sk-out { color: #ff8080; font-weight: 700; }
+.sk-price { color: var(--sk-accent, #c9962e); font-weight: 800; font-size: 18px; }
+.sk-price-big { color: var(--sk-accent, #c9962e); font-weight: 800; font-size: 30px; }
+.sk-price-old { color: #8a8a8a; text-decoration: line-through; font-size: 14px; margin-left: 6px; }
+.sk-out { color: #d63a3a; font-weight: 700; }
 
 /* buttons */
 .stButton > button[kind="primary"] {
-    background: linear-gradient(180deg, var(--sk-accent, #f5c451), var(--sk-accent-dark, #d99a1f));
-    color: #141414; border: none; font-weight: 700;
+    background: linear-gradient(180deg, var(--sk-accent, #c9962e), var(--sk-accent-dark, #a87b1f));
+    color: #ffffff; border: none; font-weight: 700;
 }
 .stButton > button { border-radius: 10px; }
 
 /* footer */
 .sk-footer {
     text-align: center;
-    color: #c9c9c9;
+    color: #6b6b6b;
     padding: 26px 0 14px 0;
     margin-top: 30px;
-    border-top: 1px solid var(--sk-accent-soft, rgba(245,196,81,.18));
+    border-top: 1px solid var(--sk-accent-soft, rgba(201,150,46,.25));
     font-size: 14px;
 }
 
 /* product cards */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: var(--sk-accent-soft, rgba(245,196,81,.18)) !important;
-    background: rgba(255,255,255,.03);
+    border-color: var(--sk-accent-soft, rgba(201,150,46,.25)) !important;
+    background: #ffffff;
     border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
