@@ -1,11 +1,11 @@
-# SK Store — theme settings (dark + gold)
+# SK Store — theme settings (light + gold)
 # Ye file GitHub par jati hai. Is me KOI secret nahi hai.
 # secrets.toml isi folder me alag se banti hai (wo GitHub par nahi jati).
 
 [theme]
-base = "dark"
-primaryColor = "#f5c451"
-backgroundColor = "#0e0e13"
-secondaryBackgroundColor = "#191922"
-textColor = "#f5f5f5"
+base = "light"
+primaryColor = "#c9962e"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f3f6"
+textColor = "#1a1a1a"
 font = "sans serif"
