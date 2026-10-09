@@ -18,6 +18,10 @@ create table if not exists public.products (
   price numeric not null check (price >= 0),
   discount_percent numeric not null default 0
     check (discount_percent >= 0 and discount_percent <= 90),
+  discount_price numeric check (discount_price is null or discount_price >= 0),
+  buy_price numeric not null default 0 check (buy_price >= 0),
+  delivery_expense numeric not null default 0 check (delivery_expense >= 0),
+  packing_expense numeric not null default 0 check (packing_expense >= 0),
   category_id uuid references public.categories(id) on delete set null,
   images text[] not null default '{}',
   video_url text,
@@ -72,7 +76,8 @@ insert into public.settings (key, value) values
   ('delivery_fee', '200'),
   ('free_delivery_over', '5000'),
   ('new_badge_days', '7'),
-  ('store_name', 'SK Store')
+  ('store_name', 'SK Store'),
+  ('site_theme', 'dark-gold')
 on conflict (key) do nothing;
 
 -- ---------- storage buckets (product images & videos) ----------
@@ -94,3 +99,22 @@ create policy "sk public read videos"
 
 -- NOTE: uploads/deletes happen through the Streamlit backend using the
 -- service_role key (kept in Streamlit secrets), which bypasses RLS.
+
+-- ============================================================
+-- MIGRATION (purani database ke liye — ek dafa chalao):
+-- Naye columns add karo + purane discount_percent ko discount_price me badlo.
+-- ============================================================
+alter table public.products
+  add column if not exists discount_price numeric
+    check (discount_price is null or discount_price >= 0),
+  add column if not exists buy_price numeric not null default 0
+    check (buy_price >= 0),
+  add column if not exists delivery_expense numeric not null default 0
+    check (delivery_expense >= 0),
+  add column if not exists packing_expense numeric not null default 0
+    check (packing_expense >= 0);
+
+update public.products
+set discount_price = round(price * (1 - discount_percent / 100), 2)
+where discount_price is null
+  and coalesce(discount_percent, 0) > 0;
