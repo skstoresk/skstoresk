@@ -27,7 +27,7 @@ if not st.session_state.get("admin_authed"):
 
 ui.admin_header()
 
-tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "📁 Categories", "⚙️ Settings"])
+tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "⚙️ Settings"])
 
 # ================= DASHBOARD =================
 with tabs[0]:
@@ -51,7 +51,7 @@ _PAGES_BASE = "https://skstoresk.github.io/skstoresk"
 with tabs[1]:
     st.subheader("Products")
     cats = db.get_categories()
-    cat_names = ["(No category)"] + [c["name"] for c in cats]
+    cat_names = ["(No category)", "➕ Nayi category..."] + [c["name"] for c in cats]
     cat_id_of = {c["name"]: c["id"] for c in cats}
 
     editing = st.session_state.get("editing_product")
@@ -92,6 +92,9 @@ with tabs[1]:
         cur_cat = next((c["name"] for c in cats if c["id"] == ex.get("category_id")), "(No category)")
         category = st.selectbox("Category", cat_names,
                                 index=cat_names.index(cur_cat) if cur_cat in cat_names else 0)
+        new_cat_name = ""
+        if category == "➕ Nayi category...":
+            new_cat_name = st.text_input("Nayi category ka naam *", placeholder="jaise: Kitchen, Beauty")
 
         tags = st.text_input("🏷️ Tags * (comma se alag karein)",
                              value=ex.get("tags") or "",
@@ -150,12 +153,34 @@ with tabs[1]:
         if not (3 <= len(tag_words) <= 500):
             errs.append(f"Tags me kam az kam 3 words aur zyada se zyada 500 words hon "
                         f"(abhi {len(tag_words)} words).")
+        if category == "➕ Nayi category..." and not new_cat_name.strip():
+            errs.append("Nayi category ka naam likhein.")
         if errs:
             for e in errs:
                 st.error(e)
             st.stop()
 
         with st.spinner("Uploading…"):
+            if category == "➕ Nayi category...":
+                _nc = new_cat_name.strip()
+                _new_id = None
+                try:
+                    _res = db.add_category(_nc)
+                    _data = getattr(_res, "data", None)
+                    if _data:
+                        _new_id = _data[0].get("id")
+                except Exception:  # noqa: BLE001
+                    _new_id = None
+                if not _new_id:
+                    _match = [c for c in db.get_categories()
+                              if c["name"].strip().lower() == _nc.lower()]
+                    _new_id = _match[0]["id"] if _match else None
+                if not _new_id:
+                    st.error("Category nahi ban saki — dobara try karein.")
+                    st.stop()
+                category_id = _new_id
+            else:
+                category_id = cat_id_of.get(category)
             urls = list(kept)
             for f in new_imgs or []:
                 try:
@@ -187,7 +212,7 @@ with tabs[1]:
                 "buy_price": buy_price,
                 "delivery_expense": delivery_exp,
                 "packing_expense": packing_exp,
-                "category_id": cat_id_of.get(category),
+                "category_id": category_id,
                 "images": urls,
                 "video_url": video_url,
                 "youtube_url": yt_url,
@@ -362,30 +387,8 @@ with tabs[3]:
                     db.delete_banner(b["id"])
                     st.rerun()
 
-# ================= CATEGORIES =================
-with tabs[4]:
-    st.subheader("Categories")
-    with st.form("cat_form", clear_on_submit=True):
-        cname = st.text_input("Nayi category ka naam")
-        if st.form_submit_button("➕ Add Category"):
-            if not cname.strip():
-                st.error("Naam likhein.")
-                st.stop()
-            try:
-                db.add_category(cname.strip())
-                st.success("✅ Category added!")
-                st.rerun()
-            except Exception:
-                st.error("Ye category pehle se hai.")
-    for c in db.get_categories():
-        cc1, cc2 = st.columns([4, 1])
-        cc1.markdown(f"📁 **{c['name']}**")
-        if cc2.button("🗑️", key=f"cd_{c['id']}"):
-            db.delete_category(c["id"])
-            st.rerun()
-
 # ================= SETTINGS =================
-with tabs[5]:
+with tabs[4]:
     st.subheader("Store Settings")
     with st.form("settings_form"):
         dfee = st.text_input("Delivery Fee (Rs)", value=db.get_setting("delivery_fee", "200"))
