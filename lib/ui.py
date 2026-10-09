@@ -1,9 +1,48 @@
 """Shared page chrome: public header/footer, admin header/footer."""
+import html
 from urllib.parse import quote_plus
 
 import streamlit as st
 
 from . import config, db
+
+
+def product_slideshow_html(images, uid, height=200, interval=3000):
+    """Auto-cycling product image slideshow (custom HTML).
+    Streamlit ka image widget istemal nahi hota — is liye koi fullscreen
+    button ya extra chrome nahi ata."""
+    imgs = (images or [])[:6]
+    if not imgs:
+        return ""
+    slides = "\n".join(
+        f'<img src="{html.escape(u, quote=True)}" '
+        f'class="skcs-img{" skcs-on" if i == 0 else ""}" alt="">'
+        for i, u in enumerate(imgs)
+    )
+    return f"""
+<div class="skcs" id="skcs-{uid}" style="height:{int(height)}px">{slides}</div>
+<style>
+.skcs {{ position: relative; width: 100%; overflow: hidden;
+         border-radius: 10px; background: #fff; }}
+.skcs-img {{ position: absolute; inset: 0; width: 100%; height: 100%;
+             object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }}
+.skcs-img.skcs-on {{ opacity: 1; }}
+</style>
+<script>
+(function(){{
+  var box = document.getElementById('skcs-{uid}');
+  if (!box) return;
+  var imgs = box.querySelectorAll('.skcs-img');
+  if (imgs.length < 2) return;
+  var i = 0;
+  setInterval(function(){{
+    imgs[i].classList.remove('skcs-on');
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add('skcs-on');
+  }}, {int(interval)});
+}})();
+</script>
+"""
 
 
 _WA_SVG = (
