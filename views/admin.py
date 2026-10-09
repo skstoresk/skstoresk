@@ -329,7 +329,10 @@ with tabs[1]:
                     cc1, cc2 = st.columns(2)
                     with cc1:
                         if st.button("Yes, delete", key=f"yesdel_{p['id']}"):
-                            for u in p.get("images") or []:
+                            _del_urls = list(p.get("images") or [])
+                            if p.get("video_url"):
+                                _del_urls.append(p["video_url"])
+                            for u in _del_urls:
                                 storage.delete_by_url(u)
                             db.delete_product(p["id"])
                             if share:
