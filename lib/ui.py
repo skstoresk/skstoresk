@@ -7,19 +7,25 @@ from . import config, db
 
 
 def public_header():
-    """Public site header: logo + Home + Cart + Track. (No theme picker.)"""
+    """Animated big store-name hero + compact nav (no wasted space, no theme picker)."""
     st.session_state.setdefault("cart", {})
     cart_count = sum(st.session_state["cart"].values())
-    h1, h2, h3, h4 = st.columns([5.6, 1.1, 1.6, 1.1])
-    with h1:
-        st.markdown(f"<div class='sk-logo'>🛍️ {config.STORE_NAME}</div>", unsafe_allow_html=True)
-    with h2:
+    st.markdown(
+        "<div class='sk-hero'>"
+        "<div class='sk-hero-name'><span class='sk-hero-emoji'>🛍️</span> "
+        f"<span class='sk-hero-text'>{config.STORE_NAME.upper()}</span></div>"
+        "<div class='sk-hero-tag'>Quality Products &nbsp;•&nbsp; Cash on Delivery</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    n1, n2, n3 = st.columns(3)
+    with n1:
         if st.button("🏠 Home", use_container_width=True, key="nav_home"):
             st.switch_page("views/home.py")
-    with h3:
+    with n2:
         if st.button(f"🛒 Cart ({cart_count})", use_container_width=True, key="nav_cart"):
             st.switch_page("views/cart.py")
-    with h4:
+    with n3:
         if st.button("🚚 Track", use_container_width=True, key="nav_track"):
             st.switch_page("views/track.py")
     st.divider()
