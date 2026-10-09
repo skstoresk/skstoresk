@@ -27,12 +27,14 @@ if cat_name:
     st.caption(f"📁 {cat_name}")
 
 new_days = int(db.get_setting("new_badge_days", "7") or 7)
-disc = float(p.get("discount_percent") or 0)
+sp = sale_price(p)
+list_price = float(p.get("price") or 0)
 badges = ""
 if is_new(p.get("created_at"), new_days):
     badges += "<span class='sk-badge sk-badge-new'>NEW</span> "
-if disc > 0:
-    badges += f"<span class='sk-badge sk-badge-disc'>-{disc:g}% OFF</span>"
+if sp < list_price and list_price > 0:
+    pct = round((1 - sp / list_price) * 100)
+    badges += f"<span class='sk-badge sk-badge-disc'>-{pct:g}% OFF</span>"
 if badges:
     st.markdown(badges, unsafe_allow_html=True)
 
@@ -63,14 +65,14 @@ with left:
         st.video(p["youtube_url"])
 
 with right:
-    if disc > 0:
+    if sp < list_price:
         st.markdown(
-            f"<span class='sk-price-big'>{format_price(sale_price(p['price'], disc))}</span> "
-            f"<span class='sk-price-old'>{format_price(p['price'])}</span>",
+            f"<span class='sk-price-big'>{format_price(sp)}</span> "
+            f"<span class='sk-price-old'>{format_price(list_price)}</span>",
             unsafe_allow_html=True,
         )
     else:
-        st.markdown(f"<span class='sk-price-big'>{format_price(p['price'])}</span>", unsafe_allow_html=True)
+        st.markdown(f"<span class='sk-price-big'>{format_price(list_price)}</span>", unsafe_allow_html=True)
 
     stock = int(p.get("stock") or 0)
     if stock <= 0:
