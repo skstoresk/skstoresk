@@ -5,8 +5,10 @@ import json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from lib import db
+from lib import db, ui
 from lib.utils import format_price, is_new, sale_price, youtube_id
+
+ui.public_header()
 
 
 def _gallery_html(images):
@@ -99,14 +101,14 @@ if not pid:
     st.error("Product nahi mila.")
     if st.button("⬅ Back to Home"):
         st.switch_page("views/home.py")
-    st.stop()
+    ui.stop_with_footer()
 
 p = db.get_product(pid)
 if not p or not p.get("is_active"):
     st.error("Ye product ab available nahi hai.")
     if st.button("⬅ Back to Home"):
         st.switch_page("views/home.py")
-    st.stop()
+    ui.stop_with_footer()
 
 if st.button("⬅ Back"):
     st.switch_page("views/home.py")
@@ -207,7 +209,8 @@ if related:
                 _rimg = (rp.get("images") or [""])[0]
                 if _rimg:
                     st.image(_rimg, use_container_width=True)
-                st.markdown(f"**{rp['name']}**")
+                st.markdown(f"<span class='sk-card-name'>{html.escape(rp['name'])}</span>",
+                            unsafe_allow_html=True)
                 _rsp = sale_price(rp)
                 _rlp = float(rp.get("price") or 0)
                 if _rsp < _rlp:
@@ -225,3 +228,5 @@ if related:
                     st.rerun()
 else:
     st.caption("Mazid products jald aa rahe hain. 🛍️")
+
+ui.public_footer()
