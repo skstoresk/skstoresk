@@ -90,6 +90,12 @@ with tabs[1]:
         category = st.selectbox("Category", cat_names,
                                 index=cat_names.index(cur_cat) if cur_cat in cat_names else 0)
 
+        tags = st.text_input("🏷️ Tags * (comma se alag karein)",
+                             value=ex.get("tags") or "",
+                             placeholder="trimmer, shaver, grooming kit, men gift",
+                             help="Kam az kam 3 words, zyada se zyada 500 words. "
+                                  "Customer in words se search karke ye product payega.")
+
         st.markdown("**Images (minimum 2, maximum 6)** *")
         if ex_images:
             st.caption(f"Abhi {len(ex_images)} image(s) hain — hatane ke liye select karein:")
@@ -137,6 +143,10 @@ with tabs[1]:
             errs.append(f"Maximum 6 images allowed hain (abhi {total_imgs}).")
         if vchoice == "YouTube link" and youtube_link and "youtu" not in youtube_link:
             errs.append("YouTube link sahi nahi lag raha.")
+        tag_words = [w for w in tags.replace(",", " ").split() if w]
+        if not (3 <= len(tag_words) <= 500):
+            errs.append(f"Tags me kam az kam 3 words aur zyada se zyada 500 words hon "
+                        f"(abhi {len(tag_words)} words).")
         if errs:
             for e in errs:
                 st.error(e)
@@ -164,9 +174,11 @@ with tabs[1]:
             elif vchoice == "No video":
                 video_url, yt_url = None, None
 
+            norm_tags = ", ".join(t.strip() for t in tags.split(",") if t.strip())
             data = {
                 "name": name.strip(),
                 "description": description.strip(),
+                "tags": norm_tags,
                 "price": price,
                 "discount_price": float(discount_price) if float(discount_price) > 0 else None,
                 "buy_price": buy_price,
