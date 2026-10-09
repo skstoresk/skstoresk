@@ -5,7 +5,7 @@ import json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from lib import config, db, ui
+from lib import db, ui
 from lib.utils import format_price, is_new, sale_price, youtube_id
 
 ui.public_header()
@@ -134,27 +134,6 @@ if sp < list_price and list_price > 0:
     badges += f"<span class='sk-badge sk-badge-disc'>-{pct:g}% OFF</span>"
 if badges:
     st.markdown(badges, unsafe_allow_html=True)
-
-# ad link copy (Facebook ad chalane ke liye product ka link)
-_ad_url = f"{(config.APP_URL or '').rstrip('/')}/product?p={pid}"
-components.html(
-    f"""<button id="sk-copylink" style="background:#1877F2;color:#fff;border:none;border-radius:20px;
-padding:8px 18px;font-weight:700;font-size:14px;cursor:pointer;">
-📋 Ad Link Copy Karo</button>
-<script>
-document.getElementById('sk-copylink').addEventListener('click', function(){{
-  var ta = document.createElement('textarea');
-  ta.value = "{_ad_url}";
-  document.body.appendChild(ta); ta.select();
-  try {{ document.execCommand('copy'); }} catch(e) {{}}
-  document.body.removeChild(ta);
-  var b = document.getElementById('sk-copylink');
-  b.textContent = '✅ Link Copied!';
-  setTimeout(function(){{ b.textContent = '📋 Ad Link Copy Karo'; }}, 2000);
-}});
-</script>""",
-    height=50,
-)
 
 left, right = st.columns([3, 2])
 
