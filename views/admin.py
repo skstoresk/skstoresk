@@ -54,10 +54,11 @@ with tabs[1]:
     st.subheader("Products")
     _lsu = st.session_state.pop("last_share_url", None)
     if _lsu:
+        _lmsg = st.session_state.pop("last_share_msg", "")
         if st.session_state.pop("last_share_ok", True):
             st.success("🔗 Share link ban raha hai — ~2 minute me live ho jayega:")
         else:
-            st.warning("Share page auto-build trigger nahi ho saka — link phir bhi yehi hai:")
+            st.warning(f"Share page auto-build trigger nahi ho saka — wajah: {_lmsg}")
         st.code(_lsu)
         st.caption("↑ Ye link copy karke Facebook mein paste karo — photo + price ka preview khud ban jayega.")
     cats = db.get_categories()
@@ -267,6 +268,7 @@ with tabs[1]:
                                   f"/share/{_saved['id']}.html")
                 st.session_state["last_share_url"] = _share_url
                 st.session_state["last_share_ok"] = _ok
+                st.session_state["last_share_msg"] = _msg
                 if not _ok:
                     st.warning(f"Share auto-build trigger: {_msg}")
             except Exception as e:  # noqa: BLE001
