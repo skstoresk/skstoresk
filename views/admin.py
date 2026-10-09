@@ -287,13 +287,22 @@ with tabs[2]:
                     st.error(f"Update failed: {e}")
 
 # ================= BANNERS =================
+PLACEMENT_LABELS = {
+    "top": "⬆️ Top — home page ke bilkul upar",
+    "middle": "↔️ Middle — home page darmiyan me (products ke beech)",
+    "bottom": "⬇️ Bottom — home page ke neeche",
+    "product": "📦 Product page — Add to Cart ke paas",
+}
+
 with tabs[3]:
-    st.subheader("Banners (Home page ke top par)")
+    st.subheader("Banners (4 jaga lag sakte hain)")
     with st.form("banner_form", clear_on_submit=True):
         btype = st.selectbox("Banner type", ["new", "discount", "announcement"],
                              format_func=lambda x: {"new": "🆕 New Product",
                                                     "discount": "🔥 Discount",
                                                     "announcement": "📢 Announcement"}[x])
+        bplace = st.selectbox("Banner ki jaga", list(PLACEMENT_LABELS.keys()),
+                              format_func=lambda k: PLACEMENT_LABELS[k])
         btitle = st.text_input("Title *", placeholder="e.g. New Winter Collection!")
         bsub = st.text_input("Subtitle", placeholder="e.g. Flat 20% off — limited time")
         bimg = st.file_uploader("Banner image (optional)", type=["jpg", "jpeg", "png", "webp"])
@@ -309,7 +318,8 @@ with tabs[3]:
                 except Exception as e:  # noqa: BLE001
                     st.error(f"Image upload failed: {e}")
                     st.stop()
-            db.create_banner({"banner_type": btype, "title": btitle.strip(),
+            db.create_banner({"banner_type": btype, "placement": bplace,
+                              "title": btitle.strip(),
                               "subtitle": bsub.strip(), "image_url": img_url,
                               "sort_order": int(bsort), "is_active": True})
             st.success("✅ Banner added!")
@@ -319,8 +329,10 @@ with tabs[3]:
         with st.container(border=True):
             c1, c2 = st.columns([4, 1])
             with c1:
+                _pl = PLACEMENT_LABELS.get(b.get("placement") or "top", "top")
                 st.markdown(f"**[{b['banner_type']}] {b['title']}**")
-                st.caption(f"{b.get('subtitle','')} | {'🟢 Active' if b['is_active'] else '🔴 Hidden'}")
+                st.caption(f"{_pl} | {b.get('subtitle','')} | "
+                           f"{'🟢 Active' if b['is_active'] else '🔴 Hidden'}")
             with c2:
                 if st.button("🔄 Toggle", key=f"bt_{b['id']}"):
                     db.update_banner(b["id"], {"is_active": not b["is_active"]})
