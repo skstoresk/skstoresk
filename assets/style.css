@@ -127,11 +127,15 @@ h3 {
 }
 .sk-wa-float:hover { background: #1fb857; }
 
-/* ---- product images par fullscreen button NAHI ---- */
-button[data-testid="stFullScreenButton"],
+/* ---- product images par fullscreen/expand button NAHI ----
+   (selectors Streamlit bundle se verified: stImage, stImageContainer) */
 div[data-testid="stImage"] button,
-div[data-testid="stImageContainer"] button {
+div[data-testid="stImageContainer"] button,
+button[data-testid="stFullScreenButton"],
+button[title="Fullscreen"] {
     display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 /* ---- kisi bhi title par chain (anchor) icon NAHI ---- */
