@@ -193,15 +193,15 @@ with right:
         st.subheader("📝 Description")
         st.write(p["description"])
 
-# ---------------- related products ----------------
-st.divider()
-st.subheader("🔗 Is se milte-julte products")
+# ---------------- related products (sirf tab jab related hon) ----------------
 _others = [x for x in db.get_products() if x["id"] != pid]
 _pcat = p.get("category_id")
 _same = [x for x in _others if _pcat and x.get("category_id") == _pcat]
 _rest = [x for x in _others if x not in _same]
 related = (_same + _rest)[:4]
 if related:
+    st.divider()
+    st.subheader("🔗 Is se milte-julte products")
     _cols = st.columns(len(related))
     for _col, rp in zip(_cols, related):
         with _col:
@@ -226,7 +226,5 @@ if related:
                     st.session_state["view_pid"] = rp["id"]
                     st.query_params["p"] = rp["id"]
                     st.rerun()
-else:
-    st.caption("Mazid products jald aa rahe hain. 🛍️")
 
 ui.public_footer()
