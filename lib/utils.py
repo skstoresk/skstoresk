@@ -12,12 +12,39 @@ def format_price(amount) -> str:
     return f"Rs {n:,.0f}"
 
 
-def sale_price(price, discount_percent) -> float:
+def _num(value) -> float:
     try:
-        d = float(discount_percent or 0)
+        return float(value or 0)
     except (TypeError, ValueError):
-        d = 0.0
-    return round(float(price or 0) * (1 - d / 100))
+        return 0.0
+
+
+def sale_price(p) -> float:
+    """Product ki asal selling price.
+
+    Pehle `discount_price` (direct sale wali qeemat) dekhta hai.
+    Purani rows ke liye `discount_percent` se calculate karta hai,
+    warna list `price` wapas karta hai.
+    """
+    price = _num(p.get("price"))
+    dp = _num(p.get("discount_price"))
+    if dp > 0:
+        return round(dp, 2)
+    dpc = _num(p.get("discount_percent"))
+    if dpc > 0:
+        return round(price * (1 - dpc / 100), 2)
+    return round(price, 2)
+
+
+def profit_per_unit(p) -> float:
+    """Tumhara profit per unit: sale price − buy price − delivery − packing."""
+    return round(
+        sale_price(p)
+        - _num(p.get("buy_price"))
+        - _num(p.get("delivery_expense"))
+        - _num(p.get("packing_expense")),
+        2,
+    )
 
 
 def youtube_id(url: str):
