@@ -35,7 +35,7 @@ products = db.get_products(
 new_days = int(db.get_setting("new_badge_days", "7") or 7)
 
 
-def product_card(p):
+def product_card(p, key_prefix=""):
     imgs = p.get("images") or []
     with st.container(border=True):
         if imgs:
@@ -62,12 +62,12 @@ def product_card(p):
         stock = int(p.get("stock") or 0)
         if stock <= 0:
             st.markdown("<span class='sk-out'>Out of Stock</span>", unsafe_allow_html=True)
-        if st.button("View 👀", key=f"view_{p['id']}", use_container_width=True, disabled=stock <= 0):
+        if st.button("View 👀", key=f"view_{key_prefix}_{p['id']}", use_container_width=True, disabled=stock <= 0):
             st.query_params["p"] = p["id"]
             st.switch_page("views/product.py")
 
 
-def product_grid(items, cols=3):
+def product_grid(items, cols=3, key_prefix=""):
     if not items:
         st.info("Koi product nahi mila. 🔍")
         return
@@ -75,7 +75,7 @@ def product_grid(items, cols=3):
         row = st.columns(cols)
         for j, p in enumerate(items[i : i + cols]):
             with row[j]:
-                product_card(p)
+                product_card(p, key_prefix=key_prefix)
 
 
 # ---------------- sections ----------------
@@ -83,13 +83,13 @@ if not search and chosen_cat == "All categories":
     new_items = [p for p in products if is_new(p.get("created_at"), new_days)][:6]
     if new_items:
         st.subheader("🆕 New Arrivals")
-        product_grid(new_items)
+        product_grid(new_items, key_prefix="new")
 
     disc_items = [p for p in products if sale_price(p) < float(p.get("price") or 0)][:6]
     if disc_items:
         st.subheader("🔥 On Discount")
-        product_grid(disc_items)
+        product_grid(disc_items, key_prefix="disc")
 
     st.subheader("🛒 All Products")
 
-product_grid(products)
+product_grid(products, key_prefix="all")
