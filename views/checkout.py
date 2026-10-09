@@ -3,7 +3,7 @@ import re
 
 import streamlit as st
 
-from lib import db, emailer
+from lib import db, emailer, ui
 from lib.utils import format_price, sale_price
 
 COUNTRIES = [
@@ -14,6 +14,7 @@ COUNTRIES = [
     "Netherlands", "Other",
 ]
 
+ui.public_header()
 st.title("💳 Checkout")
 st.info("💵 Payment method: **Cash on Delivery** — ghar par product milne par payment.")
 
@@ -22,7 +23,7 @@ if not cart:
     st.warning("Cart khaali hai.")
     if st.button("⬅ Back to Home"):
         st.switch_page("views/home.py")
-    st.stop()
+    ui.stop_with_footer()
 
 # ---- order summary ----
 delivery_fee = float(db.get_setting("delivery_fee", "200") or 200)
@@ -40,7 +41,7 @@ for pid, qty in cart.items():
     })
 if not items:
     st.error("Cart ke products ab available nahi hain.")
-    st.stop()
+    ui.stop_with_footer()
 fee = 0.0 if subtotal >= free_over else delivery_fee
 total = subtotal + fee
 
@@ -79,7 +80,7 @@ if submitted:
             "International shipping is not available at the moment — "
             "we're working on it and will announce it soon. Thank you for understanding! ❤️"
         )
-        st.stop()
+        ui.stop_with_footer()
     if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         errors.append("Email ka format sahi nahi hai.")
     # stock check
@@ -90,7 +91,7 @@ if submitted:
     if errors:
         for e in errors:
             st.error(e)
-        st.stop()
+        ui.stop_with_footer()
 
     order_data = {
         "customer_name": name.strip(),
@@ -110,7 +111,7 @@ if submitted:
         order = resp.data[0]
     except Exception as e:  # noqa: BLE001
         st.error(f"Order save nahi ho saka. Dobara try karein. ({e})")
-        st.stop()
+        ui.stop_with_footer()
 
     # decrement stock
     for it in items:
@@ -148,3 +149,5 @@ if submitted:
     with col2:
         if st.button("🛍️ Continue Shopping", use_container_width=True):
             st.switch_page("views/home.py")
+
+ui.public_footer()
