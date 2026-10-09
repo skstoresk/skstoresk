@@ -27,6 +27,9 @@ GMAIL_APP_PASSWORD = get_secret("GMAIL_APP_PASSWORD", "")
 ADMIN_NOTIFY_EMAIL = get_secret("ADMIN_NOTIFY_EMAIL", "")
 STORE_NAME = get_secret("STORE_NAME", "SK Store")
 APP_URL = get_secret("APP_URL", "").rstrip("/")
+# Auto share pages (GitHub Actions): PAT with `repo` scope + "owner/repo"
+GITHUB_TOKEN = get_secret("GITHUB_TOKEN", "")
+GITHUB_REPO = get_secret("GITHUB_REPO", "skstoresk/skstoresk")
 
 
 def supabase_configured() -> bool:
