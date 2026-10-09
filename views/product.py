@@ -4,7 +4,7 @@ import streamlit as st
 from lib import db
 from lib.utils import format_price, is_new, sale_price, youtube_id
 
-pid = st.query_params.get("p")
+pid = st.query_params.get("p") or st.session_state.get("view_pid")
 if not pid:
     st.error("Product nahi mila.")
     if st.button("⬅ Back to Home"):
