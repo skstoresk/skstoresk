@@ -6,18 +6,29 @@ from lib.utils import format_price, is_new, sale_price
 
 st.title(f"🛍️ {config.STORE_NAME}")
 
-# ---------------- banners ----------------
-banners = db.get_banners(active_only=True)
-for b in banners:
+# ---------------- banners (4 placements: top / middle / bottom / product) ----------------
+def _banner_html(b):
     img = f"<img src='{b['image_url']}' class='sk-banner-img' />" if b.get("image_url") else ""
-    st.markdown(
+    return (
         f"<div class='sk-banner sk-banner-{b['banner_type']}'>{img}"
         f"<div class='sk-banner-text'><div class='sk-banner-kicker'>"
         f"{'🆕 NEW ARRIVAL' if b['banner_type']=='new' else ('🔥 DISCOUNT' if b['banner_type']=='discount' else '📢')}</div>"
         f"<div class='sk-banner-title'>{b['title']}</div>"
-        f"<div class='sk-banner-sub'>{b.get('subtitle','')}</div></div></div>",
-        unsafe_allow_html=True,
+        f"<div class='sk-banner-sub'>{b.get('subtitle','')}</div></div></div>"
     )
+
+
+def show_banners(placement):
+    try:
+        banners = db.get_banners(placement=placement, active_only=True)
+    except Exception:
+        # purani DB (placement column nahi) — sab kuch top par dikhao
+        banners = db.get_banners(active_only=True) if placement == "top" else []
+    for b in banners:
+        st.markdown(_banner_html(b), unsafe_allow_html=True)
+
+
+show_banners("top")
 
 # ---------------- search + category filter ----------------
 cats = db.get_categories()
@@ -91,6 +102,9 @@ if not search and chosen_cat == "All categories":
         st.subheader("🔥 On Discount")
         product_grid(disc_items, key_prefix="disc")
 
+    show_banners("middle")
+
     st.subheader("🛒 All Products")
 
 product_grid(products, key_prefix="all")
+show_banners("bottom")
