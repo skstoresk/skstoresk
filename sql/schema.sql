@@ -22,6 +22,7 @@ create table if not exists public.products (
   buy_price numeric not null default 0 check (buy_price >= 0),
   delivery_expense numeric not null default 0 check (delivery_expense >= 0),
   packing_expense numeric not null default 0 check (packing_expense >= 0),
+  tags text not null default '',
   category_id uuid references public.categories(id) on delete set null,
   images text[] not null default '{}',
   video_url text,
@@ -37,6 +38,8 @@ create table if not exists public.banners (
   id uuid primary key default gen_random_uuid(),
   banner_type text not null
     check (banner_type in ('new', 'discount', 'announcement')),
+  placement text not null default 'top'
+    check (placement in ('top', 'middle', 'bottom', 'product')),
   title text not null,
   subtitle text not null default '',
   image_url text,
@@ -118,3 +121,12 @@ update public.products
 set discount_price = round(price * (1 - discount_percent / 100), 2)
 where discount_price is null
   and coalesce(discount_percent, 0) > 0;
+
+-- banners: placement column (purane banners 'top' par rahenge)
+alter table public.banners
+  add column if not exists placement text not null default 'top'
+    check (placement in ('top', 'middle', 'bottom', 'product'));
+
+-- products: tags column (search ke liye)
+alter table public.products
+  add column if not exists tags text not null default '';
