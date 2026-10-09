@@ -79,7 +79,7 @@ def main():
 
     sb = create_client(conf["SUPABASE_URL"], conf["SUPABASE_SERVICE_KEY"])
     products = (
-        sb.table("products").select("id,name,description,price,discount_percent,images")
+        sb.table("products").select("id,name,description,price,discount_price,discount_percent,images")
         .eq("is_active", True).execute().data or []
     )
 
@@ -92,8 +92,14 @@ def main():
         pid = p["id"]
         title = p.get("name") or "Product"
         desc = (p.get("description") or "")[:200]
-        disc = float(p.get("discount_percent") or 0)
-        price = round(float(p.get("price") or 0) * (1 - disc / 100))
+        # sale price: discount_price preferred, legacy discount_percent fallback
+        list_price = float(p.get("price") or 0)
+        dp = float(p.get("discount_price") or 0)
+        if dp > 0:
+            price = round(dp)
+        else:
+            disc = float(p.get("discount_percent") or 0)
+            price = round(list_price * (1 - disc / 100))
         image = (p.get("images") or [""])[0]
         target = f"{conf['APP_URL'].rstrip('/')}/product?p={pid}"
         page_url = f"{pages_base}/share/{pid}.html" if pages_base else target
