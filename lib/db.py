@@ -1,6 +1,7 @@
 """Supabase data layer. All calls go through the Streamlit backend
 using the service_role key from secrets (never exposed to the browser)."""
 import random
+import re
 import string
 
 from supabase import create_client
@@ -42,17 +43,37 @@ def delete_category(cat_id: str):
 
 
 # ---------------- products ----------------
-def get_products(active_only=True, category_id=None, search=None):
-    sb = client()
-    if not sb:
-        return []
+def _base_products_query(sb, active_only=True, category_id=None):
     q = sb.table("products").select("*, categories(name)")
     if active_only:
         q = q.eq("is_active", True)
     if category_id:
         q = q.eq("category_id", category_id)
+    return q
+
+
+def get_products(active_only=True, category_id=None, search=None):
+    sb = client()
+    if not sb:
+        return []
     if search:
-        q = q.ilike("name", f"%{search}%")
+        # query todne wale characters hatao
+        search = re.sub(r"[%(),]", "", search).strip()
+    if search:
+        # name, description ya tags me se kahin bhi mile
+        try:
+            q = _base_products_query(sb, active_only, category_id)
+            return _ok(
+                q.or_(f"name.ilike.%{search}%,description.ilike.%{search}%,"
+                      f"tags.ilike.%{search}%")
+                 .order("created_at", desc=True)
+                 .execute()
+            )
+        except Exception:
+            # purani DB (tags column nahi) — sirf name me dhoondo
+            q = _base_products_query(sb, active_only, category_id)
+            return _ok(q.ilike("name", f"%{search}%").order("created_at", desc=True).execute())
+    q = _base_products_query(sb, active_only, category_id)
     q = q.order("created_at", desc=True)
     return _ok(q.execute())
 
