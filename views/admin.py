@@ -74,6 +74,40 @@ with tabs[1]:
 
     ex = editing or {}
     ex_images = list(ex.get("images") or [])
+    _eid = editing["id"] if editing else "new"
+
+    # ---- Category + Video selectors FORM KE BAHAR ----
+    # (form ke andar option badalne par page refresh nahi hota, is liye
+    # conditional field kabhi khulta hi nahi tha)
+    _cur_cat = next((c["name"] for c in cats if c["id"] == ex.get("category_id")),
+                    "(No category)")
+    _cat_choice = st.selectbox(
+        "Category", cat_names,
+        index=cat_names.index(_cur_cat) if _cur_cat in cat_names else 0,
+        key=f"cat_choice_{_eid}")
+    _new_cat_name = ""
+    if _cat_choice == "➕ Nayi category...":
+        _new_cat_name = st.text_input("Nayi category ka naam *",
+                                      placeholder="jaise: Kitchen, Beauty",
+                                      key=f"new_cat_name_{_eid}")
+
+    st.markdown("**Product Video (optional)**")
+    _vchoice = st.radio(
+        "Video source", ["No video", "Upload video", "YouTube link"],
+        index=0 if not ex.get("video_url") and not ex.get("youtube_url")
+        else (1 if ex.get("video_url") else 2),
+        key=f"vchoice_{_eid}", horizontal=True)
+    _video_file, _youtube_link = None, ""
+    if _vchoice == "Upload video":
+        _video_file = st.file_uploader("Video file (mp4/webm/mov)",
+                                       type=["mp4", "webm", "mov"],
+                                       key=f"video_file_{_eid}")
+        if ex.get("video_url"):
+            st.caption("Pehle se ek video lagi hai — nayi upload karne par replace ho jayegi.")
+    elif _vchoice == "YouTube link":
+        _youtube_link = st.text_input("YouTube link paste karein",
+                                      value=ex.get("youtube_url") or "",
+                                      key=f"youtube_link_{_eid}")
 
     with st.form("product_form", clear_on_submit=editing is None):
         name = st.text_input("Product Name *", value=ex.get("name", ""))
@@ -100,13 +134,6 @@ with tabs[1]:
                        f"(sale {format_price(_sp)} − buy − delivery − packing)")
         else:
             st.error(f"⚠️ Per unit nuqsan: **{format_price(_profit)}** — qeemat check karo!")
-        cur_cat = next((c["name"] for c in cats if c["id"] == ex.get("category_id")), "(No category)")
-        category = st.selectbox("Category", cat_names,
-                                index=cat_names.index(cur_cat) if cur_cat in cat_names else 0)
-        new_cat_name = ""
-        if category == "➕ Nayi category...":
-            new_cat_name = st.text_input("Nayi category ka naam *", placeholder="jaise: Kitchen, Beauty")
-
         tags = st.text_input("🏷️ Tags * (comma se alag karein)",
                              value=ex.get("tags") or "",
                              placeholder="trimmer, shaver, grooming kit, men gift",
@@ -127,19 +154,6 @@ with tabs[1]:
                                     accept_multiple_files=True)
         st.caption(f"Total images hongi: {len(kept) + len(new_imgs or [])} (2–6 zaroori)")
 
-        st.markdown("**Product Video (optional)**")
-        vchoice = st.radio("Video source", ["No video", "Upload video", "YouTube link"],
-                           index=0 if not ex.get("video_url") and not ex.get("youtube_url")
-                           else (1 if ex.get("video_url") else 2))
-        video_file, youtube_link = None, ""
-        if vchoice == "Upload video":
-            video_file = st.file_uploader("Video file (mp4/webm/mov)", type=["mp4", "webm", "mov"])
-            if ex.get("video_url"):
-                st.caption("Pehle se ek video lagi hai — nayi upload karne par replace ho jayegi.")
-        elif vchoice == "YouTube link":
-            youtube_link = st.text_input("YouTube link paste karein",
-                                         value=ex.get("youtube_url") or "")
-
         is_active = st.checkbox("Active (site par show ho)", value=ex.get("is_active", True))
         submitted = st.form_submit_button("💾 Save Product", type="primary")
 
@@ -158,13 +172,13 @@ with tabs[1]:
             errs.append(f"Minimum 2 images zaroori hain (abhi {total_imgs}).")
         if total_imgs > 6:
             errs.append(f"Maximum 6 images allowed hain (abhi {total_imgs}).")
-        if vchoice == "YouTube link" and youtube_link and "youtu" not in youtube_link:
+        if _vchoice == "YouTube link" and _youtube_link and "youtu" not in _youtube_link:
             errs.append("YouTube link sahi nahi lag raha.")
         tag_words = [w for w in tags.replace(",", " ").split() if w]
         if not (3 <= len(tag_words) <= 500):
             errs.append(f"Tags me kam az kam 3 words aur zyada se zyada 500 words hon "
                         f"(abhi {len(tag_words)} words).")
-        if category == "➕ Nayi category..." and not new_cat_name.strip():
+        if _cat_choice == "➕ Nayi category..." and not _new_cat_name.strip():
             errs.append("Nayi category ka naam likhein.")
         if errs:
             for e in errs:
@@ -172,8 +186,8 @@ with tabs[1]:
             st.stop()
 
         with st.spinner("Uploading…"):
-            if category == "➕ Nayi category...":
-                _nc = new_cat_name.strip()
+            if _cat_choice == "➕ Nayi category...":
+                _nc = _new_cat_name.strip()
                 _new_id = None
                 try:
                     _res = db.add_category(_nc)
@@ -191,7 +205,7 @@ with tabs[1]:
                     st.stop()
                 category_id = _new_id
             else:
-                category_id = cat_id_of.get(category)
+                category_id = cat_id_of.get(_cat_choice)
             urls = list(kept)
             for f in new_imgs or []:
                 try:
@@ -200,17 +214,17 @@ with tabs[1]:
                     st.error(f"Image upload failed ({f.name}): {e}")
                     st.stop()
             video_url, yt_url = ex.get("video_url"), ex.get("youtube_url")
-            if vchoice == "Upload video" and video_file:
+            if _vchoice == "Upload video" and _video_file:
                 try:
-                    video_url = storage.upload_video(video_file)
+                    video_url = storage.upload_video(_video_file)
                 except Exception as e:  # noqa: BLE001
                     st.error(f"Video upload failed: {e}")
                     st.stop()
                 yt_url = None
-            elif vchoice == "YouTube link":
-                yt_url = youtube_link.strip() or None
+            elif _vchoice == "YouTube link":
+                yt_url = _youtube_link.strip() or None
                 video_url = None
-            elif vchoice == "No video":
+            elif _vchoice == "No video":
                 video_url, yt_url = None, None
 
             norm_tags = ", ".join(t.strip() for t in tags.split(",") if t.strip())
@@ -274,6 +288,11 @@ with tabs[1]:
             except Exception as e:  # noqa: BLE001
                 st.error(f"Save nahi ho saka: {e}")
                 st.stop()
+        # form ke bahar wale selectors reset (agle product ke liye saaf)
+        for _k in list(st.session_state.keys()):
+            if _k.startswith(("cat_choice_", "new_cat_name_", "vchoice_",
+                              "video_file_", "youtube_link_")):
+                st.session_state.pop(_k, None)
         st.session_state.editing_product = None
         st.rerun()
 
