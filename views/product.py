@@ -211,9 +211,13 @@ if related:
     for _col, rp in zip(_cols, related):
         with _col:
             with st.container(border=True):
-                _rimg = (rp.get("images") or [""])[0]
-                if _rimg:
-                    st.image(_rimg, use_container_width=True)
+                _rimgs = rp.get("images") or []
+                if _rimgs:
+                    components.html(
+                        ui.product_slideshow_html(_rimgs, f"rel-{rp['id']}",
+                                                  height=180, interval=3500),
+                        height=190, scrolling=False,
+                    )
                 st.markdown(f"<span class='sk-card-name'>{html.escape(rp['name'])}</span>",
                             unsafe_allow_html=True)
                 _rsp = sale_price(rp)
