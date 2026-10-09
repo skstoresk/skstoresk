@@ -87,7 +87,7 @@ def public_header():
         "</div>",
         unsafe_allow_html=True,
     )
-    n1, n2, n3, n4 = st.columns([1.15, 1.45, 1.15, 0.55])
+    n1, n2, n3 = st.columns(3)
     with n1:
         if st.button("🏠 Home", use_container_width=True, key="nav_home"):
             st.switch_page("views/home.py")
@@ -97,14 +97,14 @@ def public_header():
     with n3:
         if st.button("🚚 Track", use_container_width=True, key="nav_track"):
             st.switch_page("views/track.py")
-    with n4:
-        wa = _wa_url()
-        if wa:
-            st.markdown(
-                f"<div style='text-align:center;padding-top:2px'>"
-                f"<a class='sk-wa-float' target='_blank' href='{wa}'>{_WA_SVG}</a></div>",
-                unsafe_allow_html=True,
-            )
+    wa = _wa_url()
+    if wa:
+        # floating button: bottom-right, scroll ke saath fixed
+        st.markdown(
+            f"<a class='sk-wa-fixed' target='_blank' href='{wa}' "
+            f"title='WhatsApp par rabta karein'>{_WA_SVG}</a>",
+            unsafe_allow_html=True,
+        )
     st.divider()
 
 
@@ -124,7 +124,7 @@ def admin_header():
 
 
 def public_footer():
-    """Public footer: contact email + copyright. (WhatsApp ab header me hai.)"""
+    """Public footer: contact email + copyright. (WhatsApp floating button hai.)"""
     email = config.GMAIL_USER or ""
     st.markdown(
         "<div class='sk-footer'>"
