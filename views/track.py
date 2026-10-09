@@ -1,9 +1,10 @@
 """SK Store — Customer order tracking by order number."""
 import streamlit as st
 
-from lib import db
+from lib import db, ui
 from lib.utils import format_price
 
+ui.public_header()
 st.title("🚚 Track Your Order")
 
 default_o = st.query_params.get("o", "")
@@ -14,11 +15,11 @@ STEPS = ["Pending", "Confirmed", "Shipped", "Delivered"]
 if st.button("🔍 Track", type="primary") or default_o:
     if not order_number.strip():
         st.warning("Apna order number likhein.")
-        st.stop()
+        ui.stop_with_footer()
     order = db.get_order_by_number(order_number)
     if not order:
         st.error("❌ Is number ka koi order nahi mila. Number dobara check karein.")
-        st.stop()
+        ui.stop_with_footer()
 
     st.subheader(f"Order `{order['order_number']}`")
     status = order["status"]
@@ -55,3 +56,5 @@ if st.button("🔍 Track", type="primary") or default_o:
             st.markdown(f"- {it.get('name')} × {it.get('qty')} — {format_price(it.get('price',0)*it.get('qty',1))}")
         st.markdown(f"**Total (COD): {format_price(order.get('total',0))}**")
         st.caption(f"📍 {order['address']}, {order['city']}")
+
+ui.public_footer()
