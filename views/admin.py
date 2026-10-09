@@ -1,4 +1,5 @@
 """SK STORE — Admin portal (/admin). Login required."""
+import hashlib
 import hmac
 
 import streamlit as st
@@ -9,13 +10,28 @@ try:
     from lib import share
 except ImportError:  # lib/share.py upload karna bhool jaye to admin crash na ho
     share = None
+try:
+    from lib import diagnostics
+except ImportError:
+    diagnostics = None
 from lib.themes import DEFAULT_THEME, theme_keys, theme_label
 from lib.utils import format_price, profit_per_unit, sale_price
+
+
+def _admin_token():
+    """Browser refresh ke baad bhi login qaim rakhne wala token (URL me)."""
+    return hmac.new(b"skstore-admin", config.ADMIN_PASS.encode(),
+                    hashlib.sha256).hexdigest()[:32]
+
 
 # ---------------- login ----------------
 if not config.ADMIN_PASS:
     st.error("ADMIN_PASS secrets me set nahi hai. Pehle Streamlit Secrets configure karein.")
     st.stop()
+
+# refresh ke baad: URL me sahi token ho to dobara login nahi mangna
+if st.query_params.get("key") == _admin_token():
+    st.session_state.admin_authed = True
 
 if not st.session_state.get("admin_authed"):
     with st.form("admin_login"):
@@ -25,6 +41,7 @@ if not st.session_state.get("admin_authed"):
         if st.form_submit_button("Login", type="primary"):
             if hmac.compare_digest(u, config.ADMIN_USER) and hmac.compare_digest(p, config.ADMIN_PASS):
                 st.session_state.admin_authed = True
+                st.query_params["key"] = _admin_token()
                 st.rerun()
             else:
                 st.error("❌ Ghalat User ID ya Password.")
@@ -32,7 +49,8 @@ if not st.session_state.get("admin_authed"):
 
 ui.admin_header()
 
-tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "⚙️ Settings"])
+tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "⚙️ Settings",
+                "🔧 System Check"])
 
 # ================= DASHBOARD =================
 with tabs[0]:
@@ -491,5 +509,27 @@ with tabs[4]:
             db.set_setting("site_theme", theme)
             db.set_setting("whatsapp_number", wa.strip())
             st.success("✅ Settings saved!")
+
+# ================= SYSTEM CHECK =================
+with tabs[5]:
+    st.subheader("🔧 System Check")
+    st.caption("Button dabao — sara system real-time check hoga. "
+               "Kahin masla hua to hal bhi saath batayega.")
+    if st.button("🔍 Abhi Check Karo", type="primary"):
+        if not diagnostics:
+            st.error("❌ lib/diagnostics.py GitHub par upload nahi hui.")
+        else:
+            with st.spinner("Check ho raha hai…"):
+                results = diagnostics.run_checks()
+            ok_n = sum(1 for r in results if r["ok"])
+            if ok_n == len(results):
+                st.success(f"🎉 Sab theek hai! {ok_n}/{len(results)} checks OK.")
+            else:
+                st.warning(f"⚠️ {ok_n}/{len(results)} checks OK — neeche masle dekho:")
+            for r in results:
+                if r["ok"]:
+                    st.success(f"✅ {r['name']}")
+                else:
+                    st.error(f"❌ {r['name']}\n\n💡 {r['hint']}")
 
 ui.admin_footer()
