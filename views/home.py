@@ -63,6 +63,7 @@ def product_card(p, key_prefix=""):
         if stock <= 0:
             st.markdown("<span class='sk-out'>Out of Stock</span>", unsafe_allow_html=True)
         if st.button("View 👀", key=f"view_{key_prefix}_{p['id']}", use_container_width=True, disabled=stock <= 0):
+            st.session_state["view_pid"] = p["id"]
             st.query_params["p"] = p["id"]
             st.switch_page("views/product.py")
 
