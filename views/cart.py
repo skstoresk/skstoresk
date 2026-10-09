@@ -1,9 +1,10 @@
 """SK Store — Shopping cart."""
 import streamlit as st
 
-from lib import db
+from lib import db, ui
 from lib.utils import format_price, sale_price
 
+ui.public_header()
 st.title("🛒 Your Cart")
 st.info("💵 **Note:** Only Cash on Delivery service available hai filhal.")
 
@@ -12,7 +13,7 @@ if not cart:
     st.warning("Cart khaali hai. Kuch pasand karo! 🛍️")
     if st.button("⬅ Continue Shopping"):
         st.switch_page("views/home.py")
-    st.stop()
+    ui.stop_with_footer()
 
 delivery_fee = float(db.get_setting("delivery_fee", "200") or 200)
 free_over = float(db.get_setting("free_delivery_over", "5000") or 5000)
@@ -72,3 +73,5 @@ with col1:
 with col2:
     if st.button("✅ Proceed to Checkout", use_container_width=True, type="primary"):
         st.switch_page("views/checkout.py")
+
+ui.public_footer()
