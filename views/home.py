@@ -43,20 +43,22 @@ def product_card(p):
         badges = ""
         if is_new(p.get("created_at"), new_days):
             badges += "<span class='sk-badge sk-badge-new'>NEW</span> "
-        disc = float(p.get("discount_percent") or 0)
-        if disc > 0:
-            badges += f"<span class='sk-badge sk-badge-disc'>-{disc:g}%</span>"
+        sp = sale_price(p)
+        list_price = float(p.get("price") or 0)
+        if sp < list_price and list_price > 0:
+            pct = round((1 - sp / list_price) * 100)
+            badges += f"<span class='sk-badge sk-badge-disc'>-{pct:g}%</span>"
         if badges:
             st.markdown(badges, unsafe_allow_html=True)
         st.markdown(f"**{p['name']}**")
-        if disc > 0:
+        if sp < list_price:
             st.markdown(
-                f"<span class='sk-price'>{format_price(sale_price(p['price'], disc))}</span> "
-                f"<span class='sk-price-old'>{format_price(p['price'])}</span>",
+                f"<span class='sk-price'>{format_price(sp)}</span> "
+                f"<span class='sk-price-old'>{format_price(list_price)}</span>",
                 unsafe_allow_html=True,
             )
         else:
-            st.markdown(f"<span class='sk-price'>{format_price(p['price'])}</span>", unsafe_allow_html=True)
+            st.markdown(f"<span class='sk-price'>{format_price(list_price)}</span>", unsafe_allow_html=True)
         stock = int(p.get("stock") or 0)
         if stock <= 0:
             st.markdown("<span class='sk-out'>Out of Stock</span>", unsafe_allow_html=True)
@@ -83,7 +85,7 @@ if not search and chosen_cat == "All categories":
         st.subheader("🆕 New Arrivals")
         product_grid(new_items)
 
-    disc_items = [p for p in products if float(p.get("discount_percent") or 0) > 0][:6]
+    disc_items = [p for p in products if sale_price(p) < float(p.get("price") or 0)][:6]
     if disc_items:
         st.subheader("🔥 On Discount")
         product_grid(disc_items)
