@@ -32,7 +32,7 @@ for pid, qty in cart.items():
     p = db.get_product(pid)
     if not p or not p.get("is_active"):
         continue
-    price = sale_price(p["price"], p.get("discount_percent"))
+    price = sale_price(p)
     subtotal += price * qty
     items.append({
         "product_id": pid, "name": p["name"], "price": price, "qty": qty,
