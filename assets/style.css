@@ -114,19 +114,31 @@ h3 {
     font-size: 15px;
     margin-bottom: 4px;
 }
-.sk-wa-btn {
-    display: inline-block;
+.sk-wa-float {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     background: #25D366;
-    color: #ffffff !important;
-    font-weight: 800;
-    font-size: 16px;
-    padding: 12px 28px;
-    border-radius: 30px;
+    box-shadow: 0 2px 10px rgba(37,211,102,.5);
     text-decoration: none !important;
-    margin: 10px 0 14px 0;
-    box-shadow: 0 2px 10px rgba(37,211,102,.45);
 }
-.sk-wa-btn:hover { background: #1fb857; }
+.sk-wa-float:hover { background: #1fb857; }
+
+/* ---- product images par fullscreen button NAHI ---- */
+button[data-testid="stFullScreenButton"],
+div[data-testid="stImage"] button,
+div[data-testid="stImageContainer"] button {
+    display: none !important;
+}
+
+/* ---- kisi bhi title par chain (anchor) icon NAHI ---- */
+h1 a[href^="#"], h2 a[href^="#"], h3 a[href^="#"],
+h1 button, h2 button, h3 button {
+    display: none !important;
+}
 .sk-footer-copy { margin-top: 4px; }
 .sk-footer-admin { padding-top: 18px; }
 
