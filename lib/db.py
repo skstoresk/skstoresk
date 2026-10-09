@@ -78,7 +78,7 @@ def delete_product(pid: str):
 
 
 # ---------------- banners ----------------
-def get_banners(banner_type=None, active_only=True):
+def get_banners(banner_type=None, placement=None, active_only=True):
     sb = client()
     if not sb:
         return []
@@ -87,6 +87,8 @@ def get_banners(banner_type=None, active_only=True):
         q = q.eq("is_active", True)
     if banner_type:
         q = q.eq("banner_type", banner_type)
+    if placement:
+        q = q.eq("placement", placement)
     q = q.order("sort_order").order("created_at", desc=True)
     return _ok(q.execute())
 
