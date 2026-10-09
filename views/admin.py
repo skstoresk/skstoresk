@@ -3,7 +3,7 @@ import hmac
 
 import streamlit as st
 
-from lib import config, db, emailer, storage, ui
+from lib import config, db, emailer, share, storage, ui
 from lib.themes import DEFAULT_THEME, theme_keys, theme_label
 from lib.utils import format_price, profit_per_unit, sale_price
 
@@ -45,11 +45,16 @@ with tabs[0]:
         st.warning(f"⚠️ {len(pending)} orders pending hain — Orders tab me confirm karein.")
 
 # ================= PRODUCTS =================
-# Facebook share links isi base par bante hain (GitHub Pages)
-_PAGES_BASE = "https://skstoresk.github.io/skstoresk"
-
 with tabs[1]:
     st.subheader("Products")
+    _lsu = st.session_state.pop("last_share_url", None)
+    if _lsu:
+        if st.session_state.pop("last_share_ok", True):
+            st.success("🔗 Share link ban raha hai — ~2 minute me live ho jayega:")
+        else:
+            st.warning("Share page auto-build trigger nahi ho saka — link phir bhi yehi hai:")
+        st.code(_lsu)
+        st.caption("↑ Ye link copy karke Facebook mein paste karo — photo + price ka preview khud ban jayega.")
     cats = db.get_categories()
     cat_names = ["(No category)", "➕ Nayi category..."] + [c["name"] for c in cats]
     cat_id_of = {c["name"]: c["id"] for c in cats}
@@ -203,9 +208,21 @@ with tabs[1]:
                 video_url, yt_url = None, None
 
             norm_tags = ", ".join(t.strip() for t in tags.split(",") if t.strip())
+            # slug: product-name based short link; stable across edits
+            _old_slug = ((editing or {}).get("slug") or "").strip()
+            if _old_slug:
+                _slug = _old_slug
+            else:
+                try:
+                    _taken = {str(x.get("slug") or "").strip()
+                              for x in db.get_products(active_only=False) if x.get("slug")}
+                except Exception:  # noqa: BLE001
+                    _taken = set()
+                _slug = share.unique_slug(share.slugify(name), _taken)
             data = {
                 "name": name.strip(),
                 "description": description.strip(),
+                "slug": _slug,
                 "tags": norm_tags,
                 "price": price,
                 "discount_price": float(discount_price) if float(discount_price) > 0 else None,
@@ -222,10 +239,23 @@ with tabs[1]:
             try:
                 if editing:
                     db.update_product(editing["id"], data)
+                    _saved = dict(editing)
+                    _saved.update(data)
+                    _saved["id"] = editing["id"]
                     st.success("✅ Product updated!")
                 else:
-                    db.create_product(data)
+                    _res = db.create_product(data)
+                    _rows = getattr(_res, "data", None) or []
+                    _saved = dict(data)
+                    _saved["id"] = _rows[0]["id"] if _rows else None
                     st.success("✅ Product added — site par live ho gaya!")
+                # ---- auto share page (GitHub Action, ~2 min me live) ----
+                _ok, _msg = share.trigger_share_build(
+                    "upsert", share.build_product_payload(_saved))
+                st.session_state["last_share_url"] = share.share_url_for(_saved)
+                st.session_state["last_share_ok"] = _ok
+                if not _ok:
+                    st.warning(f"Share auto-build trigger: {_msg}")
             except Exception as e:  # noqa: BLE001
                 st.error(f"Save nahi ho saka: {e}")
                 st.stop()
@@ -268,6 +298,9 @@ with tabs[1]:
                             for u in p.get("images") or []:
                                 storage.delete_by_url(u)
                             db.delete_product(p["id"])
+                            share.trigger_share_build(
+                                "delete", {"id": p["id"],
+                                           "slug": (p.get("slug") or "").strip()})
                             st.session_state.pop(f"confirm_del_{p['id']}", None)
                             st.success("Deleted.")
                             st.rerun()
@@ -276,7 +309,7 @@ with tabs[1]:
                             st.session_state.pop(f"confirm_del_{p['id']}", None)
                             st.rerun()
         if st.session_state.get(f"show_share_{p['id']}"):
-            st.code(f"{_PAGES_BASE}/share/{p['id']}.html")
+            st.code(share.share_url_for(p))
             st.caption("↑ Ye link copy karke Facebook mein paste karo — "
                        "photo + price ka preview khud ban jayega.")
 
