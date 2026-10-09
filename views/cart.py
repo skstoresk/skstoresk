@@ -25,7 +25,7 @@ for pid, qty in list(cart.items()):
         del cart[pid]
         continue
     valid_ids.append(pid)
-    price = sale_price(p["price"], p.get("discount_percent"))
+    price = sale_price(p)
     line = price * qty
     subtotal += line
     c1, c2, c3 = st.columns([1, 3, 2])
