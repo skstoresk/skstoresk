@@ -45,6 +45,9 @@ with tabs[0]:
         st.warning(f"⚠️ {len(pending)} orders pending hain — Orders tab me confirm karein.")
 
 # ================= PRODUCTS =================
+# Facebook share links isi base par bante hain (GitHub Pages)
+_PAGES_BASE = "https://skstoresk.github.io/skstoresk"
+
 with tabs[1]:
     st.subheader("Products")
     cats = db.get_categories()
@@ -226,6 +229,10 @@ with tabs[1]:
                 if st.button("✏️ Edit", key=f"edit_{p['id']}"):
                     st.session_state.editing_product = p
                     st.rerun()
+                if st.button("🔗 Share Link", key=f"share_{p['id']}",
+                             help="Facebook ad ke liye share link (preview ke saath)"):
+                    st.session_state[f"show_share_{p['id']}"] = \
+                        not st.session_state.get(f"show_share_{p['id']}")
                 if st.button("🗑️ Delete", key=f"del_{p['id']}"):
                     st.session_state[f"confirm_del_{p['id']}"] = True
                 if st.session_state.get(f"confirm_del_{p['id']}"):
@@ -243,6 +250,10 @@ with tabs[1]:
                         if st.button("Cancel", key=f"nodel_{p['id']}"):
                             st.session_state.pop(f"confirm_del_{p['id']}", None)
                             st.rerun()
+        if st.session_state.get(f"show_share_{p['id']}"):
+            st.code(f"{_PAGES_BASE}/share/{p['id']}.html")
+            st.caption("↑ Ye link copy karke Facebook mein paste karo — "
+                       "photo + price ka preview khud ban jayega.")
 
 # ================= ORDERS =================
 with tabs[2]:
