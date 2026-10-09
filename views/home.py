@@ -2,11 +2,48 @@
 import html
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from lib import db, ui
 from lib.utils import format_price, is_new, sale_price
 
 ui.public_header()
+
+
+def _card_slideshow(p):
+    """Product card image: auto-cycling slideshow (3s, fade). No Streamlit chrome."""
+    imgs = (p.get("images") or [])[:6]
+    if not imgs:
+        return ""
+    pid = p["id"]
+    slides = "\n".join(
+        f'<img src="{html.escape(u, quote=True)}" class="skcs-img{" skcs-on" if i == 0 else ""}" alt="">'
+        for i, u in enumerate(imgs)
+    )
+    return f"""
+<div class="skcs" id="skcs-{pid}">{slides}</div>
+<style>
+.skcs {{ position: relative; width: 100%; height: 200px; overflow: hidden;
+         border-radius: 10px; background: #fff; }}
+.skcs-img {{ position: absolute; inset: 0; width: 100%; height: 100%;
+             object-fit: contain; opacity: 0; transition: opacity 0.8s ease; }}
+.skcs-img.skcs-on {{ opacity: 1; }}
+</style>
+<script>
+(function(){{
+  var box = document.getElementById('skcs-{pid}');
+  if (!box) return;
+  var imgs = box.querySelectorAll('.skcs-img');
+  if (imgs.length < 2) return;
+  var i = 0;
+  setInterval(function(){{
+    imgs[i].classList.remove('skcs-on');
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add('skcs-on');
+  }}, 3000);
+}})();
+</script>
+"""
 
 # ---------------- banners (4 placements: top / middle / bottom / product) ----------------
 def _banner_html(b):
@@ -55,7 +92,7 @@ def product_card(p, key_prefix=""):
     imgs = p.get("images") or []
     with st.container(border=True):
         if imgs:
-            st.image(imgs[0], use_container_width=True)
+            components.html(_card_slideshow(p), height=210, scrolling=False)
         badges = ""
         if is_new(p.get("created_at"), new_days):
             badges += "<span class='sk-badge sk-badge-new'>NEW</span> "
