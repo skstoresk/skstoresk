@@ -198,15 +198,18 @@ with right:
         st.subheader("📝 Description")
         st.write(p["description"])
 
-# ---------------- related products (sirf tab jab related hon) ----------------
+# ---------------- related products (same category; else discounted; no heading) ----------------
 _others = [x for x in db.get_products() if x["id"] != pid]
 _pcat = p.get("category_id")
-_same = [x for x in _others if _pcat and x.get("category_id") == _pcat]
-_rest = [x for x in _others if x not in _same]
-related = (_same + _rest)[:4]
+_same = [x for x in _others if _pcat and x.get("category_id") == _pcat][:4]
+if _same:
+    related = _same
+else:
+    related = [x for x in _others
+               if float(x.get("discount_price") or 0) > 0
+               or float(x.get("discount_percent") or 0) > 0][:4]
 if related:
     st.divider()
-    st.subheader("🔗 Is se milte-julte products")
     _cols = st.columns(len(related))
     for _col, rp in zip(_cols, related):
         with _col:
