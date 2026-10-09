@@ -3,11 +3,9 @@ import hmac
 
 import streamlit as st
 
-from lib import config, db, emailer, storage
+from lib import config, db, emailer, storage, ui
 from lib.themes import DEFAULT_THEME, theme_keys, theme_label
 from lib.utils import format_price, profit_per_unit, sale_price
-
-st.title("🔐 Admin Portal")
 
 # ---------------- login ----------------
 if not config.ADMIN_PASS:
@@ -27,9 +25,7 @@ if not st.session_state.get("admin_authed"):
                 st.error("❌ Ghalat User ID ya Password.")
     st.stop()
 
-if st.button("🚪 Logout"):
-    st.session_state.admin_authed = False
-    st.rerun()
+ui.admin_header()
 
 tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "📁 Categories", "⚙️ Settings"])
 
@@ -376,11 +372,14 @@ with tabs[5]:
                               value=db.get_setting("new_badge_days", "7"))
         cur_theme = db.get_setting("site_theme", DEFAULT_THEME)
         theme = st.selectbox(
-            "🎨 Site ka default theme (visitors header se change kar sakte hain)",
+            "🎨 Site ka theme (sab visitors ko yahi nazar ayega)",
             theme_keys(),
             index=theme_keys().index(cur_theme) if cur_theme in theme_keys() else 0,
             format_func=theme_label,
         )
+        wa = st.text_input("💬 WhatsApp number (footer me rabta button ke liye)",
+                           value=db.get_setting("whatsapp_number", ""),
+                           placeholder="03001234567")
         if st.form_submit_button("💾 Save Settings", type="primary"):
             try:
                 float(dfee); float(ffree); int(ndays)
@@ -391,4 +390,7 @@ with tabs[5]:
             db.set_setting("free_delivery_over", ffree)
             db.set_setting("new_badge_days", ndays)
             db.set_setting("site_theme", theme)
+            db.set_setting("whatsapp_number", wa.strip())
             st.success("✅ Settings saved!")
+
+ui.admin_footer()
