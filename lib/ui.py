@@ -109,16 +109,23 @@ def public_header():
 
 
 def admin_header():
-    """Admin portal header: logo + ADMIN tag + Logout. No public nav."""
-    a1, a2 = st.columns([6, 1.4])
+    """Admin portal header: logo + ADMIN tag + Refresh + Logout. No public nav."""
+    a1, a2, a3 = st.columns([5.4, 1.7, 1.7])
     with a1:
         st.markdown(
             f"<div class='sk-logo'>🛍️ {config.STORE_NAME} <span class='sk-admin-tag'>ADMIN</span></div>",
             unsafe_allow_html=True,
         )
     with a2:
+        if st.button("🔄 Refresh", use_container_width=True, key="admin_refresh"):
+            st.rerun()
+    with a3:
         if st.button("🚪 Logout", use_container_width=True, key="admin_logout"):
             st.session_state.admin_authed = False
+            try:
+                del st.query_params["key"]
+            except Exception:
+                pass
             st.switch_page("views/home.py")
     st.divider()
 
