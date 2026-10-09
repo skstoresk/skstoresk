@@ -1,8 +1,98 @@
 """SK Store — Product detail: gallery, video, price, add to cart."""
+import html
+import json
+
 import streamlit as st
+import streamlit.components.v1 as components
 
 from lib import db
 from lib.utils import format_price, is_new, sale_price, youtube_id
+
+
+def _gallery_html(images):
+    """Professional image gallery: arrows + clickable thumbnails + hover zoom.
+    Self-contained JS — no Streamlit rerun needed for image switching."""
+    thumbs = "\n".join(
+        f'<img src="{html.escape(u, quote=True)}" class="skg-thumb'
+        f'{" skg-active" if i == 0 else ""}" data-i="{i}" alt="thumbnail {i + 1}">'
+        for i, u in enumerate(images)
+    )
+    return f"""
+<div class="skg">
+  <div class="skg-main" id="skg-main">
+    <img id="skg-img" src="{html.escape(images[0], quote=True)}" alt="product image">
+    <button class="skg-arrow skg-left" id="skg-prev" aria-label="previous image">&#10094;</button>
+    <button class="skg-arrow skg-right" id="skg-next" aria-label="next image">&#10095;</button>
+    <div class="skg-count" id="skg-count">1 / {len(images)}</div>
+  </div>
+  <div class="skg-thumbs">{thumbs}</div>
+</div>
+<style>
+.skg-main {{
+  position: relative; width: 100%; height: 440px; background: #fff;
+  border: 1px solid #eee; border-radius: 12px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; cursor: zoom-in;
+}}
+.skg-main img {{
+  width: 100%; height: 100%; object-fit: contain;
+  transition: transform 0.25s ease;
+}}
+.skg-arrow {{
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.94); box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+  font-size: 18px; cursor: pointer; z-index: 3; color: #333; line-height: 1;
+}}
+.skg-left {{ left: 12px; }} .skg-right {{ right: 12px; }}
+.skg-arrow:hover {{ background: #C9A227; color: #fff; }}
+.skg-count {{
+  position: absolute; bottom: 10px; right: 12px; z-index: 3;
+  background: rgba(0,0,0,0.55); color: #fff; font-size: 12px;
+  padding: 3px 10px; border-radius: 20px;
+}}
+.skg-thumbs {{
+  display: flex; gap: 10px; margin-top: 12px;
+  overflow-x: auto; padding-bottom: 4px;
+}}
+.skg-thumb {{
+  width: 74px; height: 74px; object-fit: cover; border-radius: 10px;
+  border: 2px solid #eee; cursor: pointer; flex-shrink: 0; background: #fff;
+}}
+.skg-thumb:hover {{ border-color: #C9A227; }}
+.skg-thumb.skg-active {{ border-color: #C9A227; }}
+</style>
+<script>
+(function(){{
+  const imgs = {json.dumps(images)};
+  const n = imgs.length;
+  let idx = 0;
+  const mainImg = document.getElementById('skg-img');
+  const mainWrap = document.getElementById('skg-main');
+  const count = document.getElementById('skg-count');
+  const thumbs = Array.from(document.querySelectorAll('.skg-thumb'));
+  function show(i){{
+    idx = (i + n) % n;
+    mainImg.style.transform = 'scale(1)';
+    mainImg.src = imgs[idx];
+    count.textContent = (idx + 1) + ' / ' + n;
+    thumbs.forEach((t, k) => t.classList.toggle('skg-active', k === idx));
+  }}
+  document.getElementById('skg-prev').addEventListener('click', e => {{ e.stopPropagation(); show(idx - 1); }});
+  document.getElementById('skg-next').addEventListener('click', e => {{ e.stopPropagation(); show(idx + 1); }});
+  thumbs.forEach(t => t.addEventListener('click', () => show(parseInt(t.dataset.i, 10))));
+  imgs.forEach(u => {{ const im = new Image(); im.src = u; }});
+  mainWrap.addEventListener('mousemove', e => {{
+    const r = mainWrap.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+    mainImg.style.transformOrigin = x + '% ' + y + '%';
+    mainImg.style.transform = 'scale(1.9)';
+  }});
+  mainWrap.addEventListener('mouseleave', () => {{ mainImg.style.transform = 'scale(1)'; }});
+  show(0);
+}})();
+</script>
+"""
 
 pid = st.query_params.get("p") or st.session_state.get("view_pid")
 if not pid:
@@ -42,19 +132,8 @@ left, right = st.columns([3, 2])
 
 with left:
     imgs = p.get("images") or []
-    sel_key = f"img_sel_{pid}"
-    sel = st.session_state.get(sel_key, 0)
     if imgs:
-        sel = min(sel, len(imgs) - 1)
-        st.image(imgs[sel], use_container_width=True)
-        if len(imgs) > 1:
-            thumbs = st.columns(min(len(imgs), 6))
-            for i, url in enumerate(imgs[:6]):
-                with thumbs[i]:
-                    if st.button(f"#{i+1}", key=f"thumb_{pid}_{i}"):
-                        st.session_state[sel_key] = i
-                        st.rerun()
-                    st.image(url, use_container_width=True)
+        components.html(_gallery_html(imgs[:6]), height=600, scrolling=False)
 
     # video (uploaded file OR youtube link)
     if p.get("video_url"):
@@ -95,3 +174,38 @@ with right:
     if p.get("description"):
         st.subheader("📝 Description")
         st.write(p["description"])
+
+# ---------------- related products ----------------
+st.divider()
+st.subheader("🔗 Is se milte-julte products")
+_others = [x for x in db.get_products() if x["id"] != pid]
+_pcat = p.get("category_id")
+_same = [x for x in _others if _pcat and x.get("category_id") == _pcat]
+_rest = [x for x in _others if x not in _same]
+related = (_same + _rest)[:4]
+if related:
+    _cols = st.columns(len(related))
+    for _col, rp in zip(_cols, related):
+        with _col:
+            with st.container(border=True):
+                _rimg = (rp.get("images") or [""])[0]
+                if _rimg:
+                    st.image(_rimg, use_container_width=True)
+                st.markdown(f"**{rp['name']}**")
+                _rsp = sale_price(rp)
+                _rlp = float(rp.get("price") or 0)
+                if _rsp < _rlp:
+                    st.markdown(
+                        f"<span class='sk-price'>{format_price(_rsp)}</span> "
+                        f"<span class='sk-price-old'>{format_price(_rlp)}</span>",
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(f"<span class='sk-price'>{format_price(_rlp)}</span>",
+                                unsafe_allow_html=True)
+                if st.button("View 👀", key=f"rel_{rp['id']}", use_container_width=True):
+                    st.session_state["view_pid"] = rp["id"]
+                    st.query_params["p"] = rp["id"]
+                    st.rerun()
+else:
+    st.caption("Mazid products jald aa rahe hain. 🛍️")
