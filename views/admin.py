@@ -3,7 +3,12 @@ import hmac
 
 import streamlit as st
 
-from lib import config, db, emailer, share, storage, ui
+from lib import config, db, emailer, storage, ui
+
+try:
+    from lib import share
+except ImportError:  # lib/share.py upload karna bhool jaye to admin crash na ho
+    share = None
 from lib.themes import DEFAULT_THEME, theme_keys, theme_label
 from lib.utils import format_price, profit_per_unit, sale_price
 
@@ -212,13 +217,15 @@ with tabs[1]:
             _old_slug = ((editing or {}).get("slug") or "").strip()
             if _old_slug:
                 _slug = _old_slug
-            else:
+            elif share:
                 try:
                     _taken = {str(x.get("slug") or "").strip()
                               for x in db.get_products(active_only=False) if x.get("slug")}
                 except Exception:  # noqa: BLE001
                     _taken = set()
                 _slug = share.unique_slug(share.slugify(name), _taken)
+            else:
+                _slug = ""
             data = {
                 "name": name.strip(),
                 "description": description.strip(),
@@ -250,9 +257,15 @@ with tabs[1]:
                     _saved["id"] = _rows[0]["id"] if _rows else None
                     st.success("✅ Product added — site par live ho gaya!")
                 # ---- auto share page (GitHub Action, ~2 min me live) ----
-                _ok, _msg = share.trigger_share_build(
-                    "upsert", share.build_product_payload(_saved))
-                st.session_state["last_share_url"] = share.share_url_for(_saved)
+                if share:
+                    _ok, _msg = share.trigger_share_build(
+                        "upsert", share.build_product_payload(_saved))
+                    _share_url = share.share_url_for(_saved)
+                else:
+                    _ok, _msg = False, "lib/share.py GitHub par upload nahi hui"
+                    _share_url = (f"https://skstoresk.github.io/skstoresk"
+                                  f"/share/{_saved['id']}.html")
+                st.session_state["last_share_url"] = _share_url
                 st.session_state["last_share_ok"] = _ok
                 if not _ok:
                     st.warning(f"Share auto-build trigger: {_msg}")
@@ -298,9 +311,10 @@ with tabs[1]:
                             for u in p.get("images") or []:
                                 storage.delete_by_url(u)
                             db.delete_product(p["id"])
-                            share.trigger_share_build(
-                                "delete", {"id": p["id"],
-                                           "slug": (p.get("slug") or "").strip()})
+                            if share:
+                                share.trigger_share_build(
+                                    "delete", {"id": p["id"],
+                                               "slug": (p.get("slug") or "").strip()})
                             st.session_state.pop(f"confirm_del_{p['id']}", None)
                             st.success("Deleted.")
                             st.rerun()
@@ -309,7 +323,9 @@ with tabs[1]:
                             st.session_state.pop(f"confirm_del_{p['id']}", None)
                             st.rerun()
         if st.session_state.get(f"show_share_{p['id']}"):
-            st.code(share.share_url_for(p))
+            _surl = (share.share_url_for(p) if share
+                     else f"https://skstoresk.github.io/skstoresk/share/{p['id']}.html")
+            st.code(_surl)
             st.caption("↑ Ye link copy karke Facebook mein paste karo — "
                        "photo + price ka preview khud ban jayega.")
 
