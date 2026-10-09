@@ -1,0 +1,30 @@
+name: Auto share pages
+
+# Triggered by the Streamlit admin (lib/share.py) after every product save/delete.
+# Writes docs/share/<slug>.html; GitHub Pages then deploys it (~1-2 min).
+on:
+  repository_dispatch:
+    types: [generate-share-pages]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate share page
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+        run: python scripts/generate_share_pages.py
+      - name: Commit and push
+        run: |
+          git config user.name "sk-store-bot"
+          git config user.email "sk-store-bot@local"
+          git add docs/share
+          git diff --cached --quiet || git commit -m "auto: share page update"
+          git push
