@@ -7,12 +7,18 @@ from . import config
 from .utils import format_price
 
 
+def _clean_password(pw: str) -> str:
+    # Gmail App Password "xxxx xxxx xxxx xxxx" (spaces ke saath) dikhata hai —
+    # login me spaces nahi chalte, is liye hata do.
+    return (pw or "").replace(" ", "").strip()
+
+
 def _send(to_email: str, subject: str, html_body: str):
     """Returns (ok, message). Never raises."""
     if not to_email:
         return False, "no recipient"
     if not config.email_configured():
-        return False, "Gmail not configured in secrets"
+        return False, "Gmail secrets me set nahi hai"
     msg = MIMEMultipart("alternative")
     msg["From"] = f"{config.STORE_NAME} <{config.GMAIL_USER}>"
     msg["To"] = to_email
@@ -20,10 +26,19 @@ def _send(to_email: str, subject: str, html_body: str):
     msg.attach(MIMEText(html_body, "html"))
     try:
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=25) as s:
+            s.ehlo()
             s.starttls()
-            s.login(config.GMAIL_USER, config.GMAIL_APP_PASSWORD)
+            s.ehlo()
+            s.login(config.GMAIL_USER, _clean_password(config.GMAIL_APP_PASSWORD))
             s.send_message(msg)
         return True, "sent"
+    except smtplib.SMTPAuthenticationError:
+        return False, ("Gmail login fail — App Password ghalat hai ya 2-Step Verification OFF hai. "
+                       "myaccount.google.com/apppasswords se naya App Password banao.")
+    except (smtplib.SMTPServerDisconnected, ConnectionError, TimeoutError, OSError):
+        return False, ("Gmail ne connection band kar di — aksar App Password ghalat/purana hone "
+                       "ya account me security block ki wajah se hota hai. Naya App Password "
+                       "banao, bina space ke paste karo, aur 2-Step Verification ON rakho.")
     except Exception as e:  # noqa: BLE001 - report, don't crash checkout
         return False, str(e)
 
