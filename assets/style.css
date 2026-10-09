@@ -114,18 +114,24 @@ h3 {
     font-size: 15px;
     margin-bottom: 4px;
 }
-.sk-wa-float {
+.sk-wa-fixed {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    z-index: 9999;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
     background: #25D366;
-    box-shadow: 0 2px 10px rgba(37,211,102,.5);
+    box-shadow: 0 4px 18px rgba(37,211,102,.55);
     text-decoration: none !important;
+    transition: transform .15s ease, background .15s ease;
 }
-.sk-wa-float:hover { background: #1fb857; }
+.sk-wa-fixed:hover { background: #1fb857; transform: scale(1.07); }
+.sk-wa-fixed svg { width: 30px; height: 30px; }
 
 /* ---- product images par fullscreen/expand button NAHI ----
    (selectors Streamlit bundle se verified: stImage, stImageContainer) */
