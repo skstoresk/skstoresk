@@ -1,10 +1,12 @@
 """SK Store — Home: banners, new arrivals, discounts, search & categories."""
+import html
+
 import streamlit as st
 
-from lib import config, db
+from lib import db, ui
 from lib.utils import format_price, is_new, sale_price
 
-st.title(f"🛍️ {config.STORE_NAME}")
+ui.public_header()
 
 # ---------------- banners (4 placements: top / middle / bottom / product) ----------------
 def _banner_html(b):
@@ -30,14 +32,17 @@ def show_banners(placement):
 
 show_banners("top")
 
-# ---------------- search + category filter ----------------
+# ---------------- search + category filter (compact, centered) ----------------
 cats = db.get_categories()
 cat_options = ["All categories"] + [c["name"] for c in cats]
 cat_map = {c["name"]: c["id"] for c in cats}
 
-c1, c2 = st.columns([2, 1])
-search = c1.text_input("🔍 Search products", placeholder="e.g. watch, shoes…", label_visibility="collapsed")
-chosen_cat = c2.selectbox("Category", cat_options, label_visibility="collapsed")
+_s1, _s2, _s3 = st.columns([1, 2.4, 1])
+with _s2:
+    _t1, _t2 = st.columns([2.3, 1])
+    search = _t1.text_input("🔍 Search products", placeholder="🔍  Search products…",
+                            label_visibility="collapsed")
+    chosen_cat = _t2.selectbox("Category", cat_options, label_visibility="collapsed")
 
 products = db.get_products(
     category_id=cat_map.get(chosen_cat) if chosen_cat != "All categories" else None,
@@ -61,7 +66,8 @@ def product_card(p, key_prefix=""):
             badges += f"<span class='sk-badge sk-badge-disc'>-{pct:g}%</span>"
         if badges:
             st.markdown(badges, unsafe_allow_html=True)
-        st.markdown(f"**{p['name']}**")
+        st.markdown(f"<span class='sk-card-name'>{html.escape(p['name'])}</span>",
+                    unsafe_allow_html=True)
         if sp < list_price:
             st.markdown(
                 f"<span class='sk-price'>{format_price(sp)}</span> "
@@ -108,3 +114,5 @@ if not search and chosen_cat == "All categories":
 
 product_grid(products, key_prefix="all")
 show_banners("bottom")
+
+ui.public_footer()
