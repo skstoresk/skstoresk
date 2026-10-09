@@ -2,7 +2,7 @@
 import streamlit as st
 
 from lib import config, db
-from lib.themes import DEFAULT_THEME, theme_keys, theme_label, theme_vars_css
+from lib.themes import DEFAULT_THEME, theme_keys, theme_vars_css
 
 st.set_page_config(
     page_title=f"{config.STORE_NAME} — Online Shopping",
@@ -24,15 +24,11 @@ if not config.supabase_configured():
     )
     st.stop()
 
-if "cart" not in st.session_state:
-    st.session_state.cart = {}
-
-# ---------- theme: visitor picker overrides admin default ----------
+# ---------- theme: admin ka default (public ke liye koi picker nahi) ----------
 admin_theme = db.get_setting("site_theme", DEFAULT_THEME)
 if admin_theme not in theme_keys():
     admin_theme = DEFAULT_THEME
-current_theme = st.session_state.get("site_theme") or admin_theme
-st.markdown(theme_vars_css(current_theme), unsafe_allow_html=True)
+st.markdown(theme_vars_css(admin_theme), unsafe_allow_html=True)
 
 home = st.Page("views/home.py", title="Home", icon="🏠", default=True)
 product = st.Page("views/product.py", title="Product", icon="📦", url_path="product")
@@ -46,38 +42,5 @@ pg = st.navigation(
     position="hidden",
 )
 
-# ---------- custom top header ----------
-cart_count = sum(st.session_state.cart.values())
-h1, h2, h3, h4, h5 = st.columns([4.2, 1.2, 1.4, 1.2, 1.8])
-with h1:
-    st.markdown(f"<div class='sk-logo'>🛍️ {config.STORE_NAME}</div>", unsafe_allow_html=True)
-with h2:
-    if st.button("🏠 Home", use_container_width=True, key="nav_home"):
-        st.switch_page("views/home.py")
-with h3:
-    if st.button(f"🛒 Cart ({cart_count})", use_container_width=True, key="nav_cart"):
-        st.switch_page("views/cart.py")
-with h4:
-    if st.button("🚚 Track", use_container_width=True, key="nav_track"):
-        st.switch_page("views/track.py")
-with h5:
-    picked = st.selectbox(
-        "Theme",
-        theme_keys(),
-        index=theme_keys().index(current_theme),
-        format_func=theme_label,
-        label_visibility="collapsed",
-        key="theme_picker",
-    )
-    if picked != current_theme:
-        st.session_state.site_theme = picked
-        st.rerun()
-st.divider()
-
+# header/footer har page khud render karta hai (lib/ui.py)
 pg.run()
-
-# ---------- footer ----------
-st.markdown(
-    "<div class='sk-footer'>Made with ❤ &nbsp;&nbsp;|&nbsp;&nbsp; © 2026 Kaleem. All rights reserved.</div>",
-    unsafe_allow_html=True,
-)
