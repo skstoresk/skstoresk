@@ -60,20 +60,40 @@ h3 {
     margin-bottom: 2px;
 }
 .sk-hero-name {
-    font-size: clamp(34px, 8vw, 56px);
+    font-size: clamp(48px, 11vw, 88px);
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: 6px;
     line-height: 1.15;
 }
 .sk-hero-emoji {
     display: inline-block;
     animation: sk-float 2.6s ease-in-out infinite;
 }
-/* animated store logo (hero + admin) */
+/* animated store logo (hero + admin) + rotating gold ring */
+.sk-hero-logo-wrap {
+    position: relative; display: inline-block;
+    vertical-align: middle; margin-right: 18px;
+}
+.sk-hero-logo-wrap::before {
+    content: ""; position: absolute; inset: -8px; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 62%, #f6d365 82%, transparent 100%);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    animation: sk-ring-spin 3.5s linear infinite;
+    pointer-events: none;
+}
+@keyframes sk-ring-spin { to { transform: rotate(360deg); } }
 .sk-hero-logo {
-    width: 76px; height: 76px; border-radius: 50%;
-    vertical-align: middle; margin-right: 12px; object-fit: cover;
-    animation: sk-logo-float 3.2s ease-in-out infinite, sk-logo-glow 3.2s ease-in-out infinite;
+    width: 92px; height: 92px; border-radius: 50%;
+    vertical-align: middle; object-fit: cover; display: block;
+    animation: sk-logo-entrance 1s cubic-bezier(.2,.9,.3,1.25) both,
+               sk-logo-float 3.2s ease-in-out 1.1s infinite,
+               sk-logo-glow 3.2s ease-in-out 1.1s infinite;
+}
+@keyframes sk-logo-entrance {
+    0% { opacity: 0; transform: scale(0) rotate(-200deg); }
+    70% { opacity: 1; transform: scale(1.18) rotate(12deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 .sk-admin-logo {
     width: 32px; height: 32px; border-radius: 50%;
@@ -97,6 +117,28 @@ h3 {
     -webkit-text-fill-color: transparent;
     animation: sk-shine 3.2s linear infinite;
 }
+/* letter-by-letter gather animation */
+.sk-hero-word { display: inline-block; }
+.sk-hero-letter {
+    display: inline-block;
+    background: linear-gradient(110deg, #a87b1f 15%, #f6d365 38%, #fff3c4 50%, #f6d365 62%, #a87b1f 85%);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    animation: sk-letter-in .8s cubic-bezier(.2,.9,.25,1.15) forwards,
+               sk-shine 3.2s linear infinite;
+}
+.sk-hero-space { display: inline-block; width: .35em; }
+@keyframes sk-letter-in {
+    0% { opacity: 0; transform: translateY(48px) scale(.5); filter: blur(8px); }
+    60% { opacity: 1; transform: translateY(-8px) scale(1.08); filter: blur(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* compact pill nav, centered */
+div[data-testid="stSegmentedControl"] { justify-content: center; }
 @keyframes sk-shine {
     to { background-position: 220% center; }
 }
@@ -235,7 +277,8 @@ h1 button, h2 button, h3 button {
 @media (max-width: 640px) {
     .sk-ad { min-height: 220px; }
     .sk-ad-content { padding: 24px; max-width: 88%; }
-    .sk-hero-logo { width: 54px; height: 54px; }
+    .sk-hero-logo { width: 62px; height: 62px; }
+    .sk-hero-logo-wrap { margin-right: 12px; }
 }
 
 /* badges & prices */
