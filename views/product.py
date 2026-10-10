@@ -10,6 +10,9 @@ from lib.utils import format_price, is_new, sale_price, youtube_id
 
 ui.public_header()
 
+# product-page wale banner ka Shop Now bhi View jaisa behave kare
+ui.handle_banner_goto()
+
 
 def _gallery_html(images):
     """Professional image gallery: arrows + clickable thumbnails + hover zoom.
