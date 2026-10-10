@@ -441,6 +441,7 @@ with tabs[3]:
         btitle = st.text_input("Title *", placeholder="e.g. New Winter Collection!")
         bsub = st.text_input("Subtitle", placeholder="e.g. Flat 20% off — limited time")
         bimg = st.file_uploader("Banner image (optional)", type=["jpg", "jpeg", "png", "webp"])
+        blink = st.text_input("Link (optional)", placeholder="https://... — 'Shop Now' button is par jayega")
         bsort = st.number_input("Sort order (chhota number = pehle)", min_value=0, value=0)
         if st.form_submit_button("➕ Add Banner", type="primary"):
             if not btitle.strip():
@@ -456,6 +457,7 @@ with tabs[3]:
             db.create_banner({"banner_type": btype, "placement": bplace,
                               "title": btitle.strip(),
                               "subtitle": bsub.strip(), "image_url": img_url,
+                              "link_url": (blink.strip() or None),
                               "sort_order": int(bsort), "is_active": True})
             st.success("✅ Banner added!")
             st.rerun()
