@@ -118,9 +118,16 @@ with tabs[1]:
         key=f"vchoice_{_eid}", horizontal=True)
     _video_file, _youtube_link = None, ""
     if _vchoice == "Upload video":
-        _video_file = st.file_uploader("Video file (mp4/webm/mov)",
+        _video_file = st.file_uploader("Video file (MP4 ✅ recommended — chhota size, har browser mein chalta hai)",
                                        type=["mp4", "webm", "mov"],
                                        key=f"video_file_{_eid}")
+        if _video_file is not None:
+            _vmb = len(_video_file.getvalue()) / (1024 * 1024)
+            if _vmb > 25:
+                st.warning(f"⚠️ Video {_vmb:.0f}MB ki hai! Bari videos Supabase ka 1GB free storage "
+                           f"jaldi khatam kar dengi. **YouTube link** wala option use karo — free aur unlimited.")
+            else:
+                st.caption(f"📹 {_vmb:.1f}MB — size theek hai.")
         if ex.get("video_url"):
             st.caption("Pehle se ek video lagi hai — nayi upload karne par replace ho jayegi.")
     elif _vchoice == "YouTube link":
