@@ -78,14 +78,22 @@ def _banner_kicker(btype):
 
 
 def banner_ad_html(b):
-    """Single cinematic ad-style banner card (pure HTML/CSS, page CSS se style hota hai)."""
+    """Single cinematic ad-style banner card (pure HTML/CSS, page CSS se style hota hai).
+
+    Shop Now target: product_id (in-app product page) > link_url (external) > decorative.
+    """
     img = (b.get("image_url") or "").strip()
     if img:
         bg = f"<img class='sk-ad-bg' src='{html.escape(img, quote=True)}' alt='' loading='lazy' />"
     else:
         bg = "<div class='sk-ad-bg sk-ad-bg-fallback'></div>"
+    pid = (b.get("product_id") or "").strip() if isinstance(b.get("product_id"), str) else b.get("product_id")
     link = (b.get("link_url") or "").strip()
-    if link:
+    if pid:
+        _pq = html.escape(str(pid), quote=True)
+        cta = (f"<a class='sk-ad-cta sk-ad-prod' data-pid='{_pq}' "
+               f"href='product?p={_pq}'>Shop Now &rarr;</a>")
+    elif link:
         cta = (f"<a class='sk-ad-cta' href='{html.escape(link, quote=True)}' "
                f"target='_blank' rel='noopener'>Shop Now &rarr;</a>")
     else:
@@ -167,6 +175,16 @@ def banner_carousel_html(banners, uid="top"):
   dots.forEach(function(d){{
     d.addEventListener('click', function(){{
       clearInterval(timer); go(parseInt(d.getAttribute('data-i'), 10)); auto();
+    }});
+  }});
+  // product-linked Shop Now: iframe ke andar relative URL toot jata hai,
+  // is liye top window ko product page par bhejo (same-origin).
+  rot.querySelectorAll('.sk-ad-prod').forEach(function(a){{
+    a.addEventListener('click', function(e){{
+      e.preventDefault();
+      var url = '/product?p=' + encodeURIComponent(a.getAttribute('data-pid'));
+      try {{ window.top.location.href = window.top.location.origin + url; }}
+      catch(err) {{ window.open(url, '_top'); }}
     }});
   }});
   auto();
