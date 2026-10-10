@@ -185,3 +185,35 @@ def set_setting(key: str, value: str):
         .upsert({"key": key, "value": str(value)}, on_conflict="key")
         .execute()
     )
+
+
+# ---------------- reviews ----------------
+def get_reviews(product_id, approved_only=True):
+    sb = client()
+    if not sb:
+        return []
+    q = sb.table("reviews").select("*").eq("product_id", product_id)
+    if approved_only:
+        q = q.eq("is_approved", True)
+    q = q.order("created_at", desc=True)
+    return _ok(q.execute())
+
+
+def create_review(data: dict):
+    return client().table("reviews").insert(data).execute()
+
+
+def get_all_reviews():
+    sb = client()
+    if not sb:
+        return []
+    return _ok(sb.table("reviews").select("*, products(name)")
+               .order("created_at", desc=True).execute())
+
+
+def update_review(rid: str, data: dict):
+    return client().table("reviews").update(data).eq("id", rid).execute()
+
+
+def delete_review(rid: str):
+    return client().table("reviews").delete().eq("id", rid).execute()
