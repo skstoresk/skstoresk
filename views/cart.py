@@ -4,7 +4,7 @@ import streamlit as st
 from lib import db, ui
 from lib.utils import format_price, sale_price
 
-ui.public_header()
+ui.public_header(active="cart")
 st.title("🛒 Your Cart")
 st.info("💵 **Note:** Only Cash on Delivery service available hai filhal.")
 
