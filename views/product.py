@@ -238,6 +238,18 @@ if related:
                         st.rerun()
 
 # ---------------- customer reviews ----------------
+# star widget ka click: ?rsel=N -> session mein rating (likha hua text mehfooz rehta hai)
+_rsel = st.query_params.get("rsel")
+if _rsel:
+    try:
+        st.session_state[f"sel_rating_{pid}"] = max(1, min(5, int(_rsel)))
+    except Exception:
+        pass
+    try:
+        del st.query_params["rsel"]
+    except Exception:
+        pass
+
 st.divider()
 st.subheader("⭐ Customer Reviews")
 _revs = db.get_reviews(pid)
@@ -260,36 +272,33 @@ if _revs:
 else:
     st.caption("Abhi koi review nahi — sab se pehle aap likhein!")
 
-with st.form(f"rev_form_{pid}", clear_on_submit=True):
-    st.markdown("**✍️ Apna review likhein**")
-    _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed")
-    _rmail = st.text_input("Email *", placeholder="aap@example.com")
-    st.caption("📧 Hamare jawab ki email isi address par ayegi.")
-    st.markdown("**Rating** — stars par tap karein:")
-    if hasattr(st, "pills"):
-        _rrate = st.pills("Stars", options=[5, 4, 3, 2, 1],
-                          format_func=lambda x: "⭐" * x, default=5,
-                          label_visibility="collapsed")
-    else:
-        _rrate = st.radio("Stars", options=[5, 4, 3, 2, 1],
-                          format_func=lambda x: "⭐" * x, horizontal=True,
-                          label_visibility="collapsed")
-    _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.")
-    if st.form_submit_button("✅ Review Post Karo", type="primary"):
-        if not _rname.strip():
-            st.error("Naam zaroori hai.")
-            st.stop()
-        if "@" not in _rmail.strip() or "." not in _rmail.strip():
-            st.error("Sahi email likhein.")
-            st.stop()
-        try:
-            db.create_review({"product_id": pid, "name": _rname.strip(),
-                              "email": _rmail.strip(), "rating": int(_rrate or 5),
-                              "comment": _rcomment.strip()})
-        except Exception as e:  # noqa: BLE001
-            st.error(f"Review post nahi hua: {e}")
-            st.stop()
-        st.success("🎉 Shukriya! Aapka review post ho gaya.")
-        st.rerun()
+st.markdown("**✍️ Apna review likhein**")
+_rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed", key=f"rv_name_{pid}")
+_rmail = st.text_input("Email *", placeholder="aap@example.com", key=f"rv_mail_{pid}")
+st.caption("📧 Hamare jawab ki email isi address par ayegi.")
+st.markdown("**Rating** — stars par tap karein:")
+components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 5), uid=pid),
+                height=72, scrolling=False)
+_rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.",
+                         key=f"rv_cmt_{pid}")
+if st.button("✅ Review Post Karo", type="primary", key=f"rv_post_{pid}"):
+    _rrate = int(st.session_state.get(f"sel_rating_{pid}", 5))
+    if not _rname.strip():
+        st.error("Naam zaroori hai.")
+        st.stop()
+    if "@" not in _rmail.strip() or "." not in _rmail.strip():
+        st.error("Sahi email likhein.")
+        st.stop()
+    try:
+        db.create_review({"product_id": pid, "name": _rname.strip(),
+                          "email": _rmail.strip(), "rating": _rrate,
+                          "comment": _rcomment.strip()})
+    except Exception as e:  # noqa: BLE001
+        st.error(f"Review post nahi hua: {e}")
+        st.stop()
+    for _k in (f"rv_name_{pid}", f"rv_mail_{pid}", f"rv_cmt_{pid}", f"sel_rating_{pid}"):
+        st.session_state.pop(_k, None)
+    st.toast("🎉 Shukriya! Aapka review post ho gaya.", icon="⭐")
+    st.rerun()
 
 ui.public_footer()
