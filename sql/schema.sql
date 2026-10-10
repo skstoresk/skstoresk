@@ -43,8 +43,23 @@ create table if not exists public.banners (
   title text not null,
   subtitle text not null default '',
   image_url text,
+  link_url text,
+  product_id uuid references public.products(id) on delete set null,
   is_active boolean not null default true,
   sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  name text not null,
+  email text,
+  rating int not null check (rating between 1 and 5),
+  comment text not null default '',
+  reply_text text,
+  reply_at timestamptz,
+  is_approved boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -130,3 +145,20 @@ alter table public.banners
 -- products: tags column (search ke liye)
 alter table public.products
   add column if not exists tags text not null default '';
+
+-- products: slug column (short product-name share links, e.g. /share/manual-vegetable-chopper.html)
+alter table public.products
+  add column if not exists slug text;
+
+update public.products
+set slug = nullif(trim(both '-' from lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g'))), '')
+where slug is null;
+
+-- duplicate slugs ho jayen to id ka tukra jor do
+update public.products p
+set slug = p.slug || '-' || left(p.id::text, 8)
+where p.slug is not null and exists (
+  select 1 from public.products q where q.slug = p.slug and q.id < p.id
+);
+
+create unique index if not exists products_slug_uidx on public.products (slug);
