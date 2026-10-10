@@ -137,8 +137,11 @@ h3 {
     60% { opacity: 1; transform: translateY(-8px) scale(1.08); filter: blur(0); }
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* compact pill nav, centered */
-div[data-testid="stSegmentedControl"] { justify-content: center; }
+/* compact pill nav, bilkul center (logo + brand name ke neeche) */
+div[data-testid="stSegmentedControl"] { display: flex; justify-content: center; }
+/* related products: compact cards */
+.sk-card-name-sm { font-size: 13.5px !important; }
+.sk-rel-price .sk-price { font-size: 15px; }
 @keyframes sk-shine {
     to { background-position: 220% center; }
 }
