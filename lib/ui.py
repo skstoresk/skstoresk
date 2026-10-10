@@ -92,7 +92,7 @@ def banner_ad_html(b):
     if pid:
         _pq = html.escape(str(pid), quote=True)
         cta = (f"<a class='sk-ad-cta sk-ad-prod' data-pid='{_pq}' "
-               f"href='?quickbuy={_pq}'>Shop Now &rarr;</a>")
+               f"href='?goprod={_pq}'>Shop Now &rarr;</a>")
     elif link:
         cta = (f"<a class='sk-ad-cta' href='{html.escape(link, quote=True)}' "
                f"target='_blank' rel='noopener'>Shop Now &rarr;</a>")
@@ -108,6 +108,26 @@ def banner_ad_html(b):
         f"{sub}{cta}"
         "</div></div>"
     )
+
+
+def handle_banner_goto():
+    """Banner Shop Now == product card ka View button (bilkul waisa hi rasta).
+
+    Banner HTML se Python call nahi ho sakta, is liye CTA '?goprod=<id>'
+    par le jata hai; yahan detect kar ke View wala hi code chalao:
+    session_state['view_pid'] + query_params['p'] + switch_page.
+    """
+    _pid = st.query_params.get("goprod")
+    if not _pid:
+        return False
+    try:
+        del st.query_params["goprod"]
+    except Exception:
+        pass
+    st.session_state["view_pid"] = _pid
+    st.query_params["p"] = _pid
+    st.switch_page("views/product.py")
+    return True
 
 
 _AD_CSS = """
@@ -177,12 +197,12 @@ def banner_carousel_html(banners, uid="top"):
       clearInterval(timer); go(parseInt(d.getAttribute('data-i'), 10)); auto();
     }});
   }});
-  // product-linked Shop Now: same page par Quick Buy panel kholo (koi naya page/tab nahi).
+  // product-linked Shop Now: View button wala rasta (?goprod= -> handle_banner_goto).
   // iframe ke andar relative URL toot jata hai, is liye top window par bhejo (same-origin).
   rot.querySelectorAll('.sk-ad-prod').forEach(function(a){{
     a.addEventListener('click', function(e){{
       e.preventDefault();
-      var url = '/?quickbuy=' + encodeURIComponent(a.getAttribute('data-pid'));
+      var url = '/?goprod=' + encodeURIComponent(a.getAttribute('data-pid'));
       try {{ window.top.location.href = window.top.location.origin + url; }}
       catch(err) {{ window.open(url, '_top'); }}
     }});
