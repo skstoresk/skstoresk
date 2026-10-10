@@ -278,19 +278,23 @@ _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed", key=f"rv_name_{
 _rmail = st.text_input("Email *", placeholder="aap@example.com", key=f"rv_mail_{pid}")
 st.caption("📧 Hamare jawab ki email isi address par ayegi.")
 st.markdown("**Rating** — stars par tap karein:")
-# star click URLs Python mein (iframe top ka URL parh nahi sakta)
-_base_qs = "&".join(f"{urllib.parse.quote(str(k))}={urllib.parse.quote(str(v))}"
-                    for k, v in st.query_params.items() if k != "rsel")
-_base = f"/product?{_base_qs}" if _base_qs else "/product"
-_sep = "&" if _base_qs else "?"
-_star_urls = {i: f"{_base}{_sep}rsel={i}" for i in (1, 2, 3, 4, 5)}
-components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 0),
-                                    uid=pid, click_urls=_star_urls),
-                height=72, scrolling=False)
+if hasattr(st, "feedback"):
+    # native Play Store style widget: hover par bright, click par select, pakka mehfooz
+    _fb = st.feedback("stars", key=f"rv_fb_{pid}")
+    _rrate = (_fb + 1) if _fb is not None else 0
+else:  # purana Streamlit: iframe widget (fallback)
+    _base_qs = "&".join(f"{urllib.parse.quote(str(k))}={urllib.parse.quote(str(v))}"
+                        for k, v in st.query_params.items() if k != "rsel")
+    _base = f"/product?{_base_qs}" if _base_qs else "/product"
+    _sep = "&" if _base_qs else "?"
+    _star_urls = {i: f"{_base}{_sep}rsel={i}" for i in (1, 2, 3, 4, 5)}
+    components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 0),
+                                        uid=pid, click_urls=_star_urls),
+                    height=72, scrolling=False)
+    _rrate = int(st.session_state.get(f"sel_rating_{pid}") or 0)
 _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.",
                          key=f"rv_cmt_{pid}")
 if st.button("✅ Review Post Karo", type="primary", key=f"rv_post_{pid}"):
-    _rrate = int(st.session_state.get(f"sel_rating_{pid}") or 0)
     if _rrate < 1:
         st.error("⭐ Pehle stars par tap karke rating select karo.")
         st.stop()
@@ -307,7 +311,8 @@ if st.button("✅ Review Post Karo", type="primary", key=f"rv_post_{pid}"):
     except Exception as e:  # noqa: BLE001
         st.error(f"Review post nahi hua: {e}")
         st.stop()
-    for _k in (f"rv_name_{pid}", f"rv_mail_{pid}", f"rv_cmt_{pid}", f"sel_rating_{pid}"):
+    for _k in (f"rv_name_{pid}", f"rv_mail_{pid}", f"rv_cmt_{pid}",
+               f"rv_fb_{pid}", f"sel_rating_{pid}"):
         st.session_state.pop(_k, None)
     st.toast("🎉 Shukriya! Aapka review post ho gaya.", icon="⭐")
     st.rerun()
