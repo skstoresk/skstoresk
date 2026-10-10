@@ -1,6 +1,7 @@
 """SK Store — Product detail: gallery, video, price, add to cart."""
 import html
 import json
+import urllib.parse
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -277,7 +278,14 @@ _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed", key=f"rv_name_{
 _rmail = st.text_input("Email *", placeholder="aap@example.com", key=f"rv_mail_{pid}")
 st.caption("📧 Hamare jawab ki email isi address par ayegi.")
 st.markdown("**Rating** — stars par tap karein:")
-components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 0), uid=pid),
+# star click URLs Python mein (iframe top ka URL parh nahi sakta)
+_base_qs = "&".join(f"{urllib.parse.quote(str(k))}={urllib.parse.quote(str(v))}"
+                    for k, v in st.query_params.items() if k != "rsel")
+_base = f"/product?{_base_qs}" if _base_qs else "/product"
+_sep = "&" if _base_qs else "?"
+_star_urls = {i: f"{_base}{_sep}rsel={i}" for i in (1, 2, 3, 4, 5)}
+components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 0),
+                                    uid=pid, click_urls=_star_urls),
                 height=72, scrolling=False)
 _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.",
                          key=f"rv_cmt_{pid}")
