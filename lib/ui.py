@@ -272,18 +272,29 @@ def public_header(active="home"):
     )
     _nav_pages = {"home": "views/home.py", "cart": "views/cart.py", "track": "views/track.py"}
     _nav_labels = {"home": "🏠 Home", "cart": f"🛒 Cart ({cart_count})", "track": "🚚 Track"}
-    if active not in _nav_pages:
-        active = "home"
     if hasattr(st, "segmented_control"):
         # full-width, CSS se bilkul center (logo + brand name ke neeche)
+        # NOTE: har page par widget reset hota hai taake product/checkout
+        # jese ghair-nav pages par "Home" dabane se phansa na rahe.
+        _nkey, _pkey, _rkey = "sk_main_nav", "sk_nav_page", "sk_nav_rendered"
+        if st.session_state.get(_pkey) != active:
+            _def = active if active in _nav_pages else None
+            st.session_state[_nkey] = _def
+            st.session_state[_rkey] = _def
+            st.session_state[_pkey] = active
+        _rendered = st.session_state.get(_rkey)
         _sel = st.segmented_control(
             "Navigation", list(_nav_pages.keys()),
             format_func=lambda k: _nav_labels[k],
-            default=active, label_visibility="collapsed",
-            key=f"sk_main_nav_{active}",
+            default=None, label_visibility="collapsed",
+            key=_nkey,
         )
-        if _sel in _nav_pages and _sel != active:
+        if _sel != _rendered and _sel in _nav_pages:
+            st.session_state[_pkey] = _sel
+            st.session_state[_rkey] = _sel
             st.switch_page(_nav_pages[_sel])
+        else:
+            st.session_state[_rkey] = _sel
     else:  # purana Streamlit: simple buttons
         n1, n2, n3 = st.columns(3)
         with n1:
