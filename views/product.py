@@ -184,15 +184,7 @@ with right:
     except Exception:
         _pbanners = []
     for _b in _pbanners:
-        _img = f"<img src='{_b['image_url']}' class='sk-banner-img' />" if _b.get("image_url") else ""
-        st.markdown(
-            f"<div class='sk-banner sk-banner-{_b['banner_type']}'>{_img}"
-            f"<div class='sk-banner-text'><div class='sk-banner-kicker'>"
-            f"{'🆕 NEW ARRIVAL' if _b['banner_type']=='new' else ('🔥 DISCOUNT' if _b['banner_type']=='discount' else '📢')}</div>"
-            f"<div class='sk-banner-title'>{_b['title']}</div>"
-            f"<div class='sk-banner-sub'>{_b.get('subtitle','')}</div></div></div>",
-            unsafe_allow_html=True,
-        )
+        st.markdown(ui.banner_ad_html(_b), unsafe_allow_html=True)
 
     if p.get("description"):
         st.subheader("📝 Description")
