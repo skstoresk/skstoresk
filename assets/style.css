@@ -69,6 +69,25 @@ h3 {
     display: inline-block;
     animation: sk-float 2.6s ease-in-out infinite;
 }
+/* animated store logo (hero + admin) */
+.sk-hero-logo {
+    width: 76px; height: 76px; border-radius: 50%;
+    vertical-align: middle; margin-right: 12px; object-fit: cover;
+    animation: sk-logo-float 3.2s ease-in-out infinite, sk-logo-glow 3.2s ease-in-out infinite;
+}
+.sk-admin-logo {
+    width: 32px; height: 32px; border-radius: 50%;
+    vertical-align: middle; margin-right: 8px; object-fit: cover;
+    animation: sk-logo-glow 3.2s ease-in-out infinite;
+}
+@keyframes sk-logo-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-9px) rotate(4deg); }
+}
+@keyframes sk-logo-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(246,211,101,.35); }
+    50% { box-shadow: 0 0 32px rgba(246,211,101,.8); }
+}
 .sk-hero-text {
     background: linear-gradient(110deg, #a87b1f 15%, #f6d365 38%, #fff3c4 50%, #f6d365 62%, #a87b1f 85%);
     background-size: 220% auto;
@@ -152,33 +171,72 @@ h1 button, h2 button, h3 button {
 .sk-footer-copy { margin-top: 4px; }
 .sk-footer-admin { padding-top: 18px; }
 
-/* banners */
-.sk-banner {
-    border-radius: 16px;
-    padding: 26px 28px;
-    margin: 10px 0 18px 0;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--sk-accent-border, rgba(201,150,46,.4));
-    background: linear-gradient(100deg, #fff9ec 0%, #ffffff 70%);
+/* ---- cinematic ad-style banners ---- */
+.sk-ad {
+    position: relative; border-radius: 18px; overflow: hidden;
+    margin: 12px 0 20px 0; min-height: 300px;
+    display: flex; align-items: center;
+    border: 1px solid rgba(201,150,46,.35); background: #0a0f22;
 }
-.sk-banner-discount {
-    background: linear-gradient(100deg, #fdeeee 0%, #ffffff 70%);
-    border-color: rgba(230,57,70,.35);
+.sk-ad-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    animation: sk-kenburns 14s ease-in-out infinite alternate;
 }
-.sk-banner-announcement {
-    background: linear-gradient(100deg, #e9f2fd 0%, #ffffff 70%);
-    border-color: rgba(47,127,209,.35);
+.sk-ad-bg-fallback {
+    background: radial-gradient(120% 130% at 20% 10%, #2b2150 0%, #0a0f22 60%, #05070f 100%);
+    animation: none;
 }
-.sk-banner-img {
-    position: absolute; right: 0; top: 0; height: 100%; width: 38%;
-    object-fit: cover; opacity: .55;
-    mask-image: linear-gradient(90deg, transparent, black 40%);
-    -webkit-mask-image: linear-gradient(90deg, transparent, black 40%);
+@keyframes sk-kenburns { from { transform: scale(1); } to { transform: scale(1.14); } }
+.sk-ad-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(92deg, rgba(4,7,18,.92) 18%, rgba(4,7,18,.55) 52%, rgba(4,7,18,.08) 100%);
 }
-.sk-banner-kicker { color: var(--sk-accent, #c9962e); font-weight: 700; font-size: 13px; letter-spacing: 2px; }
-.sk-banner-title { font-size: 30px; font-weight: 800; margin: 6px 0; color: #1a1a1a; }
-.sk-banner-sub { color: #555555; font-size: 16px; }
+.sk-ad-shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.sk-ad-shine::after {
+    content: ""; position: absolute; top: -20%; bottom: -20%; width: 90px;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.22), transparent);
+    transform: skewX(-18deg);
+    animation: sk-ad-sweep 4.5s ease-in-out infinite;
+}
+@keyframes sk-ad-sweep { 0% { left: -140px; } 55%, 100% { left: 130%; } }
+.sk-ad-content {
+    position: relative; z-index: 2; padding: 38px 42px; max-width: 62%;
+    animation: sk-fadeup .7s ease both;
+}
+@keyframes sk-fadeup { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+.sk-ad-kicker {
+    display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 2.5px;
+    color: #0a0f22; background: linear-gradient(110deg, #f6d365, #fff3c4);
+    padding: 6px 14px; border-radius: 20px;
+}
+.sk-ad-title {
+    font-size: clamp(24px, 4vw, 38px); font-weight: 900; color: #fff;
+    margin: 12px 0 6px; line-height: 1.15; text-shadow: 0 2px 14px rgba(0,0,0,.5);
+}
+.sk-ad-sub { color: #e9e2d2; font-size: 16px; margin-bottom: 18px; }
+.sk-ad-cta {
+    display: inline-block; font-weight: 800; font-size: 15px; color: #0a0f22 !important;
+    background: linear-gradient(110deg, #e8c15a, #f6d365);
+    padding: 12px 28px; border-radius: 30px; text-decoration: none;
+    box-shadow: 0 4px 18px rgba(232,193,90,.45); transition: transform .2s;
+}
+.sk-ad-cta:hover { transform: scale(1.05); color: #0a0f22 !important; }
+.sk-ad-cta-soon { opacity: .9; cursor: default; }
+/* ad carousel (page-level; iframe copy lives in lib/ui.py) */
+.sk-ad-slide { display: none; }
+.sk-ad-slide.active { display: block; }
+.sk-ad-slide .sk-ad { margin: 12px 0 8px; }
+.sk-ad-dots { text-align: center; padding: 6px 0 14px; }
+.sk-ad-dot {
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,.25); margin: 0 5px; cursor: pointer; transition: all .3s;
+}
+.sk-ad-dot.active { background: #f6d365; width: 28px; border-radius: 6px; }
+@media (max-width: 640px) {
+    .sk-ad { min-height: 220px; }
+    .sk-ad-content { padding: 24px; max-width: 88%; }
+    .sk-hero-logo { width: 54px; height: 54px; }
+}
 
 /* badges & prices */
 .sk-badge {
