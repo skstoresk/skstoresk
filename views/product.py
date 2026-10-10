@@ -277,12 +277,15 @@ _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed", key=f"rv_name_{
 _rmail = st.text_input("Email *", placeholder="aap@example.com", key=f"rv_mail_{pid}")
 st.caption("📧 Hamare jawab ki email isi address par ayegi.")
 st.markdown("**Rating** — stars par tap karein:")
-components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 5), uid=pid),
+components.html(ui.star_rating_html(st.session_state.get(f"sel_rating_{pid}", 0), uid=pid),
                 height=72, scrolling=False)
 _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.",
                          key=f"rv_cmt_{pid}")
 if st.button("✅ Review Post Karo", type="primary", key=f"rv_post_{pid}"):
-    _rrate = int(st.session_state.get(f"sel_rating_{pid}", 5))
+    _rrate = int(st.session_state.get(f"sel_rating_{pid}") or 0)
+    if _rrate < 1:
+        st.error("⭐ Pehle stars par tap karke rating select karo.")
+        st.stop()
     if not _rname.strip():
         st.error("Naam zaroori hai.")
         st.stop()
