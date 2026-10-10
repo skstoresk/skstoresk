@@ -1,4 +1,5 @@
 """Gmail order emails (SMTP + App Password from secrets)."""
+import html
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -130,3 +131,21 @@ def send_status_update(order: dict):
         f"Order {order['order_number']} — {order['status']} | {config.STORE_NAME}",
         _shell("📦 Order Update", body),
     )
+
+
+def send_review_reply(to_email: str, reviewer_name: str, product_name: str, reply_text: str):
+    """Review ke jawab ki email customer ko. Returns (ok, message). Never raises."""
+    try:
+        body = (
+            f"<p>Assalam-o-Alaikum <b>{html.escape(reviewer_name or 'Customer')}</b>,</p>"
+            f"<p>Aap ne <b>{html.escape(product_name or 'product')}</b> par review diya tha "
+            f"— hamara jawab hazir hai:</p>"
+            f"<div style='background:#f8f6ef;border-left:4px solid #f5c451;"
+            f"padding:12px 16px;border-radius:8px;color:#222'>"
+            f"{html.escape(reply_text or '').replace(chr(10), '<br>')}</div>"
+            "<p style='margin-top:16px'>Aapke feedback ka shukriya! 🙏</p>"
+        )
+        return _send(to_email, f"{config.STORE_NAME} — Aapke review ka jawab ⭐",
+                     _shell("⭐ Review ka jawab", body))
+    except Exception as e:  # noqa: BLE001
+        return False, str(e)
