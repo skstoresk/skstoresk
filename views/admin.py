@@ -181,7 +181,7 @@ with tabs[1]:
                 st.image(u, width=120)
         else:
             kept = []
-        new_imgs = st.file_uploader("Nayi images upload karein (jpg/png/webp)",
+        new_imgs = st.file_uploader("Nayi images upload karein (jpg/png/webp) — ⚠️ video yahan nahi, neeche 'Product Video' section mein lagao",
                                     type=["jpg", "jpeg", "png", "webp"],
                                     accept_multiple_files=True)
         st.caption(f"Total images hongi: {len(kept) + len(new_imgs or [])} (2–6 zaroori)")
