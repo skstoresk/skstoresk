@@ -243,28 +243,59 @@ def _wa_url():
     return f"https://wa.me/{digits}?text={text}"
 
 
-def public_header():
-    """Animated big store-name hero + compact nav + WhatsApp (top-right)."""
+def _hero_name_html():
+    """Store name, letter-by-letter gather animation ke liye span-wrapped."""
+    _out = []
+    for i, ch in enumerate(config.STORE_NAME.upper()):
+        if ch == " ":
+            _out.append("<span class='sk-hero-space'>&nbsp;</span>")
+        else:
+            _out.append(
+                f"<span class='sk-hero-letter' style='animation-delay:{0.07 * i:.2f}s'>"
+                f"{html.escape(ch)}</span>")
+    return "".join(_out)
+
+
+def public_header(active="home"):
+    """Bara animated hero (letter-gather + logo ring) + compact pill nav."""
     st.session_state.setdefault("cart", {})
     cart_count = sum(st.session_state["cart"].values())
     st.markdown(
         "<div class='sk-hero'>"
-        f"<div class='sk-hero-name'>{_brand_mark(hero=True)} "
-        f"<span class='sk-hero-text'>{config.STORE_NAME.upper()}</span></div>"
+        "<div class='sk-hero-name'>"
+        f"<span class='sk-hero-logo-wrap'>{_brand_mark(hero=True)}</span>"
+        f"<span class='sk-hero-word'>{_hero_name_html()}</span>"
+        "</div>"
         "<div class='sk-hero-tag'>Quality Products &nbsp;•&nbsp; Cash on Delivery</div>"
         "</div>",
         unsafe_allow_html=True,
     )
-    n1, n2, n3 = st.columns(3)
-    with n1:
-        if st.button("🏠 Home", use_container_width=True, key="nav_home"):
-            st.switch_page("views/home.py")
-    with n2:
-        if st.button(f"🛒 Cart ({cart_count})", use_container_width=True, key="nav_cart"):
-            st.switch_page("views/cart.py")
-    with n3:
-        if st.button("🚚 Track", use_container_width=True, key="nav_track"):
-            st.switch_page("views/track.py")
+    _nav_pages = {"home": "views/home.py", "cart": "views/cart.py", "track": "views/track.py"}
+    _nav_labels = {"home": "🏠 Home", "cart": f"🛒 Cart ({cart_count})", "track": "🚚 Track"}
+    if active not in _nav_pages:
+        active = "home"
+    if hasattr(st, "segmented_control"):
+        _nc1, _nc2, _nc3 = st.columns([1.5, 2.4, 1.5])
+        with _nc2:
+            _sel = st.segmented_control(
+                "Navigation", list(_nav_pages.keys()),
+                format_func=lambda k: _nav_labels[k],
+                default=active, label_visibility="collapsed",
+                key=f"sk_main_nav_{active}",
+            )
+        if _sel in _nav_pages and _sel != active:
+            st.switch_page(_nav_pages[_sel])
+    else:  # purana Streamlit: simple buttons
+        n1, n2, n3 = st.columns(3)
+        with n1:
+            if st.button("🏠 Home", use_container_width=True, key="nav_home"):
+                st.switch_page("views/home.py")
+        with n2:
+            if st.button(f"🛒 Cart ({cart_count})", use_container_width=True, key="nav_cart"):
+                st.switch_page("views/cart.py")
+        with n3:
+            if st.button("🚚 Track", use_container_width=True, key="nav_track"):
+                st.switch_page("views/track.py")
     wa = _wa_url()
     if wa:
         # floating button: bottom-right, scroll ke saath fixed
