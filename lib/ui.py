@@ -1,10 +1,38 @@
 """Shared page chrome: public header/footer, admin header/footer."""
+import base64
 import html
+import os
 from urllib.parse import quote_plus
 
 import streamlit as st
 
 from . import config, db
+
+
+_LOGO_URI = None
+
+
+def _logo_data_uri():
+    """SK logo (assets/sk-logo.png) as base64 data URI; '' if missing."""
+    global _LOGO_URI
+    if _LOGO_URI is None:
+        try:
+            _p = os.path.normpath(os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "assets", "sk-logo.png"))
+            with open(_p, "rb") as _f:
+                _LOGO_URI = "data:image/png;base64," + base64.b64encode(_f.read()).decode("ascii")
+        except Exception:
+            _LOGO_URI = ""
+    return _LOGO_URI
+
+
+def _brand_mark(hero=True):
+    """Animated logo img, ya fallback emoji (logo file na ho to)."""
+    _logo = _logo_data_uri()
+    if _logo:
+        _cls = "sk-hero-logo" if hero else "sk-admin-logo"
+        return f"<img class='{_cls}' src='{_logo}' alt='SK Store logo' />"
+    return "<span class='sk-hero-emoji'>🛍️</span>"
 
 
 def product_slideshow_html(images, uid, height=200, interval=3000):
@@ -40,6 +68,108 @@ def product_slideshow_html(images, uid, height=200, interval=3000):
     i = (i + 1) % imgs.length;
     imgs[i].classList.add('skcs-on');
   }}, {int(interval)});
+}})();
+</script>
+"""
+
+
+def _banner_kicker(btype):
+    return {"new": "🆕 NEW ARRIVAL", "discount": "🔥 DISCOUNT"}.get(btype, "📢 ANNOUNCEMENT")
+
+
+def banner_ad_html(b):
+    """Single cinematic ad-style banner card (pure HTML/CSS, page CSS se style hota hai)."""
+    img = (b.get("image_url") or "").strip()
+    if img:
+        bg = f"<img class='sk-ad-bg' src='{html.escape(img, quote=True)}' alt='' loading='lazy' />"
+    else:
+        bg = "<div class='sk-ad-bg sk-ad-bg-fallback'></div>"
+    link = (b.get("link_url") or "").strip()
+    if link:
+        cta = (f"<a class='sk-ad-cta' href='{html.escape(link, quote=True)}' "
+               f"target='_blank' rel='noopener'>Shop Now &rarr;</a>")
+    else:
+        cta = "<span class='sk-ad-cta sk-ad-cta-soon'>Shop Now &rarr;</span>"
+    sub = f"<div class='sk-ad-sub'>{html.escape(b.get('subtitle') or '')}</div>" if b.get("subtitle") else ""
+    return (
+        "<div class='sk-ad'>"
+        f"{bg}<div class='sk-ad-overlay'></div><div class='sk-ad-shine'></div>"
+        "<div class='sk-ad-content'>"
+        f"<div class='sk-ad-kicker'>{_banner_kicker(b.get('banner_type'))}</div>"
+        f"<div class='sk-ad-title'>{html.escape(b.get('title') or '')}</div>"
+        f"{sub}{cta}"
+        "</div></div>"
+    )
+
+
+_AD_CSS = """
+.sk-ad{position:relative;border-radius:18px;overflow:hidden;margin:12px 0 20px;
+min-height:300px;display:flex;align-items:center;background:#0a0f22;
+border:1px solid rgba(201,150,46,.35)}
+.sk-ad-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+animation:sk-kenburns 14s ease-in-out infinite alternate}
+.sk-ad-bg-fallback{background:radial-gradient(120% 130% at 20% 10%,#2b2150 0%,#0a0f22 60%,#05070f 100%);animation:none}
+@keyframes sk-kenburns{from{transform:scale(1)}to{transform:scale(1.14)}}
+.sk-ad-overlay{position:absolute;inset:0;background:linear-gradient(92deg,rgba(4,7,18,.92) 18%,rgba(4,7,18,.55) 52%,rgba(4,7,18,.08) 100%)}
+.sk-ad-shine{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sk-ad-shine::after{content:"";position:absolute;top:-20%;bottom:-20%;width:90px;
+background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);
+transform:skewX(-18deg);animation:sk-ad-sweep 4.5s ease-in-out infinite}
+@keyframes sk-ad-sweep{0%{left:-140px}55%,100%{left:130%}}
+.sk-ad-content{position:relative;z-index:2;padding:38px 42px;max-width:62%;animation:sk-fadeup .7s ease both}
+@keyframes sk-fadeup{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.sk-ad-kicker{display:inline-block;font-size:12px;font-weight:800;letter-spacing:2.5px;color:#0a0f22;
+background:linear-gradient(110deg,#f6d365,#fff3c4);padding:6px 14px;border-radius:20px}
+.sk-ad-title{font-size:34px;font-weight:900;color:#fff;margin:12px 0 6px;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+.sk-ad-sub{color:#e9e2d2;font-size:16px;margin-bottom:18px}
+.sk-ad-cta{display:inline-block;font-weight:800;font-size:15px;color:#0a0f22 !important;
+background:linear-gradient(110deg,#e8c15a,#f6d365);padding:12px 28px;border-radius:30px;
+text-decoration:none;box-shadow:0 4px 18px rgba(232,193,90,.45)}
+.sk-ad-slide{display:none}.sk-ad-slide.active{display:block}
+.sk-ad-slide .sk-ad{margin:12px 0 8px}
+.sk-ad-dots{text-align:center;padding:6px 0 4px}
+.sk-ad-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25);margin:0 5px;cursor:pointer}
+.sk-ad-dot.active{background:#f6d365;width:28px;border-radius:6px}
+@media(max-width:640px){.sk-ad{min-height:220px}.sk-ad-content{padding:24px;max-width:88%}.sk-ad-title{font-size:24px}}
+"""
+
+
+def banner_carousel_html(banners, uid="top"):
+    """Auto-rotating cinematic ad carousel (iframe ke liye self-contained HTML+JS)."""
+    slides = "\n".join(
+        f"<div class='sk-ad-slide{' active' if i == 0 else ''}'>{banner_ad_html(b)}</div>"
+        for i, b in enumerate(banners)
+    )
+    dots = "\n".join(
+        f"<span class='sk-ad-dot{' active' if i == 0 else ''}' data-i='{i}'></span>"
+        for i in range(len(banners))
+    )
+    return f"""
+<div class='sk-ad-rot' id='skad-{uid}'>
+<style>{_AD_CSS}</style>
+{slides}
+<div class='sk-ad-dots'>{dots}</div>
+</div>
+<script>
+(function(){{
+  var rot = document.getElementById('skad-{uid}');
+  if (!rot) return;
+  var slides = rot.querySelectorAll('.sk-ad-slide');
+  var dots = rot.querySelectorAll('.sk-ad-dot');
+  if (slides.length < 2) return;
+  var i = 0, timer = null;
+  function go(n){{
+    slides[i].classList.remove('active'); dots[i].classList.remove('active');
+    i = (n + slides.length) % slides.length;
+    slides[i].classList.add('active'); dots[i].classList.add('active');
+  }}
+  function auto(){{ timer = setInterval(function(){{ go(i + 1); }}, 5000); }}
+  dots.forEach(function(d){{
+    d.addEventListener('click', function(){{
+      clearInterval(timer); go(parseInt(d.getAttribute('data-i'), 10)); auto();
+    }});
+  }});
+  auto();
 }})();
 </script>
 """
@@ -81,7 +211,7 @@ def public_header():
     cart_count = sum(st.session_state["cart"].values())
     st.markdown(
         "<div class='sk-hero'>"
-        "<div class='sk-hero-name'><span class='sk-hero-emoji'>🛍️</span> "
+        f"<div class='sk-hero-name'>{_brand_mark(hero=True)} "
         f"<span class='sk-hero-text'>{config.STORE_NAME.upper()}</span></div>"
         "<div class='sk-hero-tag'>Quality Products &nbsp;•&nbsp; Cash on Delivery</div>"
         "</div>",
@@ -113,7 +243,7 @@ def admin_header():
     a1, a2, a3 = st.columns([5.4, 1.7, 1.7])
     with a1:
         st.markdown(
-            f"<div class='sk-logo'>🛍️ {config.STORE_NAME} <span class='sk-admin-tag'>ADMIN</span></div>",
+            f"<div class='sk-logo'>{_brand_mark(hero=False)} {config.STORE_NAME} <span class='sk-admin-tag'>ADMIN</span></div>",
             unsafe_allow_html=True,
         )
     with a2:
