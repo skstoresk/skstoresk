@@ -1,6 +1,7 @@
 """SK STORE — Admin portal (/admin). Login required."""
 import hashlib
 import hmac
+import html
 
 import streamlit as st
 
@@ -49,8 +50,8 @@ if not st.session_state.get("admin_authed"):
 
 ui.admin_header()
 
-tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "⚙️ Settings",
-                "🔧 System Check"])
+tabs = st.tabs(["📊 Dashboard", "📦 Products", "🧾 Orders", "🖼️ Banners", "⭐ Reviews",
+                "⚙️ Settings", "🔧 System Check"])
 
 # ================= DASHBOARD =================
 with tabs[0]:
@@ -564,7 +565,35 @@ with tabs[3]:
                     st.rerun()
 
 # ================= SETTINGS =================
+# ================= REVIEWS =================
 with tabs[4]:
+    st.subheader("⭐ Customer Reviews")
+    st.caption("Reviews foran site par show hote hain. Ghalat review ko Hide ya Delete karo.")
+    _arevs = db.get_all_reviews()
+    if not _arevs:
+        st.info("Abhi koi review nahi aya.")
+    for _r in _arevs:
+        _pname = (_r.get("products") or {}).get("name", "?")
+        with st.container(border=True):
+            _c1, _c2 = st.columns([4, 2])
+            with _c1:
+                _rf = int(_r.get("rating") or 0)
+                st.markdown(f"**{html.escape(_r.get('name') or '')}**  {'⭐' * _rf}")
+                st.caption(f"📦 {html.escape(_pname)}")
+                if _r.get("comment"):
+                    st.write(_r["comment"])
+                st.caption(f"📅 {(_r.get('created_at') or '')[:10]} | "
+                           f"{'🟢 Shown' if _r.get('is_approved') else '🔴 Hidden'}")
+            with _c2:
+                if st.button("🔄 Toggle", key=f"rvt_{_r['id']}", use_container_width=True):
+                    db.update_review(_r["id"], {"is_approved": not _r["is_approved"]})
+                    st.rerun()
+                if st.button("🗑️ Delete", key=f"rvd_{_r['id']}", use_container_width=True):
+                    db.delete_review(_r["id"])
+                    st.rerun()
+
+# ================= SETTINGS =================
+with tabs[5]:
     st.subheader("Store Settings")
     with st.form("settings_form"):
         dfee = st.text_input("Delivery Fee (Rs)", value=db.get_setting("delivery_fee", "200"))
@@ -596,7 +625,7 @@ with tabs[4]:
             st.success("✅ Settings saved!")
 
 # ================= SYSTEM CHECK =================
-with tabs[5]:
+with tabs[6]:
     st.subheader("🔧 System Check")
     st.caption("Button dabao — sara system real-time check hoga. "
                "Kahin masla hua to hal bhi saath batayega.")
