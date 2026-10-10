@@ -275,14 +275,13 @@ def public_header(active="home"):
     if active not in _nav_pages:
         active = "home"
     if hasattr(st, "segmented_control"):
-        _nc1, _nc2, _nc3 = st.columns([1.5, 2.4, 1.5])
-        with _nc2:
-            _sel = st.segmented_control(
-                "Navigation", list(_nav_pages.keys()),
-                format_func=lambda k: _nav_labels[k],
-                default=active, label_visibility="collapsed",
-                key=f"sk_main_nav_{active}",
-            )
+        # full-width, CSS se bilkul center (logo + brand name ke neeche)
+        _sel = st.segmented_control(
+            "Navigation", list(_nav_pages.keys()),
+            format_func=lambda k: _nav_labels[k],
+            default=active, label_visibility="collapsed",
+            key=f"sk_main_nav_{active}",
+        )
         if _sel in _nav_pages and _sel != active:
             st.switch_page(_nav_pages[_sel])
     else:  # purana Streamlit: simple buttons
