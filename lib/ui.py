@@ -110,6 +110,43 @@ def banner_ad_html(b):
     )
 
 
+def star_rating_html(value=5, uid="rate"):
+    """Play Store style star rating: 5 stars ek line mein, hover par bright,
+    click par select. Click '?rsel=N' par le jata hai (same page reload),
+    page 'rsel' ko session_state mein dal kar parhta hai."""
+    _v = max(1, min(5, int(value or 5)))
+    _spans = "".join(
+        f"<span data-v='{i}' class='{'on' if i <= _v else ''}'>★</span>"
+        for i in (5, 4, 3, 2, 1)
+    )
+    return f"""
+<div class="sk-stars" id="skstars-{uid}">{_spans}</div>
+<style>
+.sk-stars {{ display: inline-flex; flex-direction: row-reverse; font-size: 42px;
+             line-height: 1.2; cursor: pointer; user-select: none; -webkit-user-select: none; }}
+.sk-stars span {{ color: #6b6b6b; padding: 0 3px; transition: color .12s, text-shadow .12s; }}
+.sk-stars span.on {{ color: #ffb400; text-shadow: 0 0 14px rgba(255,180,0,.55); }}
+.sk-stars span:hover, .sk-stars span:hover ~ span {{
+    color: #ffb400; text-shadow: 0 0 14px rgba(255,180,0,.55); }}
+</style>
+<script>
+(function(){{
+  var box = document.getElementById('skstars-{uid}');
+  if (!box) return;
+  box.querySelectorAll('span').forEach(function(s){{
+    s.addEventListener('click', function(){{
+      try {{
+        var url = new URL(window.top.location.href);
+        url.searchParams.set('rsel', s.getAttribute('data-v'));
+        window.top.location.href = url.toString();
+      }} catch(e) {{}}
+    }});
+  }});
+}})();
+</script>
+"""
+
+
 def handle_banner_goto():
     """Banner Shop Now == product card ka View button (bilkul waisa hi rasta).
 
