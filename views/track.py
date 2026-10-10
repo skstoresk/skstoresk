@@ -4,7 +4,7 @@ import streamlit as st
 from lib import db, ui
 from lib.utils import format_price
 
-ui.public_header()
+ui.public_header(active="track")
 st.title("🚚 Track Your Order")
 
 default_o = st.query_params.get("o", "")
