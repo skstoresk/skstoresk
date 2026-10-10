@@ -251,6 +251,11 @@ if _revs:
             st.markdown(f"**{html.escape(_r.get('name') or 'Customer')}**  {'⭐' * _rf}")
             if _r.get("comment"):
                 st.write(_r["comment"])
+            if _r.get("reply_text"):
+                st.markdown(
+                    "<div class='sk-reply'><b>🏪 SK Store ka jawab:</b><br>"
+                    f"{html.escape(_r['reply_text'])}</div>",
+                    unsafe_allow_html=True)
             st.caption(f"📅 {(_r.get('created_at') or '')[:10]}")
 else:
     st.caption("Abhi koi review nahi — sab se pehle aap likhein!")
@@ -258,16 +263,29 @@ else:
 with st.form(f"rev_form_{pid}", clear_on_submit=True):
     st.markdown("**✍️ Apna review likhein**")
     _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed")
-    _rrate = st.select_slider("Rating", options=[1, 2, 3, 4, 5], value=5,
-                              format_func=lambda x: "⭐" * x)
+    _rmail = st.text_input("Email *", placeholder="aap@example.com")
+    st.caption("📧 Hamare jawab ki email isi address par ayegi.")
+    st.markdown("**Rating** — stars par tap karein:")
+    if hasattr(st, "pills"):
+        _rrate = st.pills("Stars", options=[5, 4, 3, 2, 1],
+                          format_func=lambda x: "⭐" * x, default=5,
+                          label_visibility="collapsed")
+    else:
+        _rrate = st.radio("Stars", options=[5, 4, 3, 2, 1],
+                          format_func=lambda x: "⭐" * x, horizontal=True,
+                          label_visibility="collapsed")
     _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.")
     if st.form_submit_button("✅ Review Post Karo", type="primary"):
         if not _rname.strip():
             st.error("Naam zaroori hai.")
             st.stop()
+        if "@" not in _rmail.strip() or "." not in _rmail.strip():
+            st.error("Sahi email likhein.")
+            st.stop()
         try:
             db.create_review({"product_id": pid, "name": _rname.strip(),
-                              "rating": int(_rrate), "comment": _rcomment.strip()})
+                              "email": _rmail.strip(), "rating": int(_rrate or 5),
+                              "comment": _rcomment.strip()})
         except Exception as e:  # noqa: BLE001
             st.error(f"Review post nahi hua: {e}")
             st.stop()
