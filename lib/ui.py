@@ -92,7 +92,7 @@ def banner_ad_html(b):
     if pid:
         _pq = html.escape(str(pid), quote=True)
         cta = (f"<a class='sk-ad-cta sk-ad-prod' data-pid='{_pq}' "
-               f"href='product?p={_pq}'>Shop Now &rarr;</a>")
+               f"href='?quickbuy={_pq}'>Shop Now &rarr;</a>")
     elif link:
         cta = (f"<a class='sk-ad-cta' href='{html.escape(link, quote=True)}' "
                f"target='_blank' rel='noopener'>Shop Now &rarr;</a>")
@@ -177,12 +177,12 @@ def banner_carousel_html(banners, uid="top"):
       clearInterval(timer); go(parseInt(d.getAttribute('data-i'), 10)); auto();
     }});
   }});
-  // product-linked Shop Now: iframe ke andar relative URL toot jata hai,
-  // is liye top window ko product page par bhejo (same-origin).
+  // product-linked Shop Now: same page par Quick Buy panel kholo (koi naya page/tab nahi).
+  // iframe ke andar relative URL toot jata hai, is liye top window par bhejo (same-origin).
   rot.querySelectorAll('.sk-ad-prod').forEach(function(a){{
     a.addEventListener('click', function(e){{
       e.preventDefault();
-      var url = '/product?p=' + encodeURIComponent(a.getAttribute('data-pid'));
+      var url = '/?quickbuy=' + encodeURIComponent(a.getAttribute('data-pid'));
       try {{ window.top.location.href = window.top.location.origin + url; }}
       catch(err) {{ window.open(url, '_top'); }}
     }});
