@@ -568,7 +568,8 @@ with tabs[3]:
 # ================= REVIEWS =================
 with tabs[4]:
     st.subheader("⭐ Customer Reviews")
-    st.caption("Reviews foran site par show hote hain. Ghalat review ko Hide ya Delete karo.")
+    st.caption("Reviews foran site par show hote hain. Ghalat review ko Hide ya Delete karo. "
+               "Reply site par bhi dikhega aur customer ko email bhi jayegi.")
     _arevs = db.get_all_reviews()
     if not _arevs:
         st.info("Abhi koi review nahi aya.")
@@ -579,11 +580,36 @@ with tabs[4]:
             with _c1:
                 _rf = int(_r.get("rating") or 0)
                 st.markdown(f"**{html.escape(_r.get('name') or '')}**  {'⭐' * _rf}")
-                st.caption(f"📦 {html.escape(_pname)}")
+                st.caption(f"📦 {html.escape(_pname)} | 📧 {html.escape(_r.get('email') or '—')}")
                 if _r.get("comment"):
                     st.write(_r["comment"])
+                if _r.get("reply_text"):
+                    st.markdown(f"**💬 Aapka jawab:** {_r['reply_text']}")
                 st.caption(f"📅 {(_r.get('created_at') or '')[:10]} | "
                            f"{'🟢 Shown' if _r.get('is_approved') else '🔴 Hidden'}")
+                with st.expander("💬 Reply karo"):
+                    _reply_txt = st.text_area("Jawab", value=_r.get("reply_text") or "",
+                                              key=f"rpr_{_r['id']}",
+                                              placeholder="Customer ko jawab likhein…")
+                    if st.button("📧 Reply bhejo + Email", key=f"rps_{_r['id']}", type="primary"):
+                        if not _reply_txt.strip():
+                            st.error("Jawab khaali hai.")
+                        else:
+                            from datetime import datetime, timezone
+                            db.update_review(_r["id"], {
+                                "reply_text": _reply_txt.strip(),
+                                "reply_at": datetime.now(timezone.utc).isoformat()})
+                            _rmail = (_r.get("email") or "").strip()
+                            if _rmail:
+                                _ok, _msg = emailer.send_review_reply(
+                                    _rmail, _r.get("name"), _pname, _reply_txt.strip())
+                                if _ok:
+                                    st.success(f"✅ Reply site par lag gaya aur {_rmail} ko email bhej di!")
+                                else:
+                                    st.warning(f"⚠️ Reply site par lag gaya, lekin email nahi gayi: {_msg}")
+                            else:
+                                st.success("✅ Reply site par lag gaya (customer ne email nahi di thi).")
+                            st.rerun()
             with _c2:
                 if st.button("🔄 Toggle", key=f"rvt_{_r['id']}", use_container_width=True):
                     db.update_review(_r["id"], {"is_approved": not _r["is_approved"]})
