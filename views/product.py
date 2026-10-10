@@ -205,33 +205,36 @@ else:
                or float(x.get("discount_percent") or 0) > 0][:4]
 if related:
     st.divider()
-    _cols = st.columns(len(related))
-    for _col, rp in zip(_cols, related):
-        with _col:
-            with st.container(border=True):
-                _rimgs = rp.get("images") or []
-                if _rimgs:
-                    components.html(
-                        ui.product_slideshow_html(_rimgs, f"rel-{rp['id']}",
-                                                  height=180, interval=3500),
-                        height=190, scrolling=False,
-                    )
-                st.markdown(f"<span class='sk-card-name'>{html.escape(rp['name'])}</span>",
-                            unsafe_allow_html=True)
-                _rsp = sale_price(rp)
-                _rlp = float(rp.get("price") or 0)
-                if _rsp < _rlp:
-                    st.markdown(
-                        f"<span class='sk-price'>{format_price(_rsp)}</span> "
-                        f"<span class='sk-price-old'>{format_price(_rlp)}</span>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(f"<span class='sk-price'>{format_price(_rlp)}</span>",
+    # compact: ek row mein 2 products (banner jaisa bara nahi)
+    _rel = related[:4]
+    for _i in range(0, len(_rel), 2):
+        _cols = st.columns(2)
+        for _col, rp in zip(_cols, _rel[_i:_i + 2]):
+            with _col:
+                with st.container(border=True):
+                    _rimgs = rp.get("images") or []
+                    if _rimgs:
+                        components.html(
+                            ui.product_slideshow_html(_rimgs, f"rel-{rp['id']}",
+                                                      height=130, interval=3500),
+                            height=140, scrolling=False,
+                        )
+                    st.markdown(f"<span class='sk-card-name sk-card-name-sm'>{html.escape(rp['name'])}</span>",
                                 unsafe_allow_html=True)
-                if st.button("View 👀", key=f"rel_{rp['id']}", use_container_width=True):
-                    st.session_state["view_pid"] = rp["id"]
-                    st.query_params["p"] = rp["id"]
-                    st.rerun()
+                    _rsp = sale_price(rp)
+                    _rlp = float(rp.get("price") or 0)
+                    if _rsp < _rlp:
+                        st.markdown(
+                            f"<span class='sk-price'>{format_price(_rsp)}</span> "
+                            f"<span class='sk-price-old'>{format_price(_rlp)}</span>",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown(f"<span class='sk-price'>{format_price(_rlp)}</span>",
+                                    unsafe_allow_html=True)
+                    if st.button("View 👀", key=f"rel_{rp['id']}"):
+                        st.session_state["view_pid"] = rp["id"]
+                        st.query_params["p"] = rp["id"]
+                        st.rerun()
 
 ui.public_footer()
