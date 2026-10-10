@@ -110,14 +110,16 @@ def banner_ad_html(b):
     )
 
 
-def star_rating_html(value=0, uid="rate"):
+def star_rating_html(value=0, uid="rate", click_urls=None):
     """Play Store style star rating: 5 stars ek line mein, hover par bright,
     click par select. Shuru mein koi star colored nahi (khali = bold black
-    outline). Click '?rsel=N' par le jata hai (same page reload),
-    page 'rsel' ko session_state mein dal kar parhta hai."""
+    outline). Click par banner wali tarah sirf top-window navigate hoti hai
+    (URLs Python mein bani hui ati hain, is liye iframe se parhne ki zaroorat
+    nahi). Page '?rsel=N' ko session_state mein dal kar parhta hai."""
     _v = max(0, min(5, int(value or 0)))
     _spans = "".join(
-        f"<span data-v='{i}' class='{'on' if 0 < i <= _v else ''}'>★</span>"
+        f"<span data-v='{i}' data-url='{(click_urls or {}).get(i, '#')}' "
+        f"class='{'on' if 0 < i <= _v else ''}'>★</span>"
         for i in (5, 4, 3, 2, 1)
     )
     return f"""
@@ -138,11 +140,8 @@ def star_rating_html(value=0, uid="rate"):
   if (!box) return;
   box.querySelectorAll('span').forEach(function(s){{
     s.addEventListener('click', function(){{
-      try {{
-        var url = new URL(window.top.location.href);
-        url.searchParams.set('rsel', s.getAttribute('data-v'));
-        window.top.location.href = url.toString();
-      }} catch(e) {{}}
+      try {{ window.top.location.href = window.top.location.origin + s.getAttribute('data-url'); }}
+      catch(e) {{}}
     }});
   }});
 }})();
