@@ -441,7 +441,14 @@ with tabs[3]:
         btitle = st.text_input("Title *", placeholder="e.g. New Winter Collection!")
         bsub = st.text_input("Subtitle", placeholder="e.g. Flat 20% off — limited time")
         bimg = st.file_uploader("Banner image (optional)", type=["jpg", "jpeg", "png", "webp"])
-        blink = st.text_input("Link (optional)", placeholder="https://... — 'Shop Now' button is par jayega")
+        _bprods = db.get_products(active_only=True)
+        _bprod_opts = [("none", "— Koi link nahi —")] + [(p["id"], p["name"]) for p in _bprods]
+        _bprod_map = dict(_bprod_opts)
+        bprod = st.selectbox(
+            "Product link (Shop Now dabane par user isi product par jayega)",
+            options=[o[0] for o in _bprod_opts],
+            format_func=lambda _pid: _bprod_map.get(_pid, _pid),
+        )
         bsort = st.number_input("Sort order (chhota number = pehle)", min_value=0, value=0)
         if st.form_submit_button("➕ Add Banner", type="primary"):
             if not btitle.strip():
@@ -457,24 +464,100 @@ with tabs[3]:
             db.create_banner({"banner_type": btype, "placement": bplace,
                               "title": btitle.strip(),
                               "subtitle": bsub.strip(), "image_url": img_url,
-                              "link_url": (blink.strip() or None),
+                              "product_id": (bprod if bprod != "none" else None),
                               "sort_order": int(bsort), "is_active": True})
             st.success("✅ Banner added!")
             st.rerun()
     st.divider()
+
+    # ---- banner edit form ----
+    _editing_id = st.session_state.get("editing_banner")
+    if _editing_id:
+        _eb = next((x for x in db.get_banners(active_only=False)
+                    if x["id"] == _editing_id), None)
+        if _eb is None:
+            st.session_state.pop("editing_banner", None)
+        else:
+            st.subheader("✏️ Banner edit karo")
+            _eprods = db.get_products(active_only=True)
+            _eprod_opts = [("none", "— Koi link nahi —")] + [(p["id"], p["name"]) for p in _eprods]
+            _eprod_map = dict(_eprod_opts)
+            _eprod_ids = [o[0] for o in _eprod_opts]
+            _cur_pid = _eb.get("product_id") or "none"
+            with st.form(f"banner_edit_{_eb['id']}"):
+                etype = st.selectbox(
+                    "Banner type", ["new", "discount", "announcement"],
+                    index=["new", "discount", "announcement"].index(_eb.get("banner_type") or "new"),
+                    format_func=lambda x: {"new": "🆕 New Product",
+                                           "discount": "🔥 Discount",
+                                           "announcement": "📢 Announcement"}[x])
+                eplace = st.selectbox(
+                    "Banner ki jaga", list(PLACEMENT_LABELS.keys()),
+                    index=list(PLACEMENT_LABELS.keys()).index(_eb.get("placement") or "top"),
+                    format_func=lambda k: PLACEMENT_LABELS[k])
+                etitle = st.text_input("Title *", value=_eb.get("title") or "")
+                esub = st.text_input("Subtitle", value=_eb.get("subtitle") or "")
+                if _eb.get("image_url"):
+                    st.image(_eb["image_url"], width=220, caption="Maujooda image")
+                eimg = st.file_uploader("Nayi image (khaali chhoro to purani rahegi)",
+                                        type=["jpg", "jpeg", "png", "webp"])
+                eprod = st.selectbox(
+                    "Product link (Shop Now dabane par user isi product par jayega)",
+                    options=_eprod_ids,
+                    index=_eprod_ids.index(_cur_pid) if _cur_pid in _eprod_ids else 0,
+                    format_func=lambda _pid: _eprod_map.get(_pid, _pid))
+                esort = st.number_input("Sort order (chhota number = pehle)",
+                                        min_value=0, value=int(_eb.get("sort_order") or 0))
+                eactive = st.checkbox("Active (site par dikhao)", value=bool(_eb.get("is_active")))
+                _es1, _es2 = st.columns(2)
+                with _es1:
+                    _do_save = st.form_submit_button("💾 Save", type="primary")
+                with _es2:
+                    _do_cancel = st.form_submit_button("❌ Cancel")
+            if _do_save:
+                if not etitle.strip():
+                    st.error("Title zaroori hai.")
+                    st.stop()
+                _edata = {"banner_type": etype, "placement": eplace,
+                          "title": etitle.strip(), "subtitle": esub.strip(),
+                          "product_id": (eprod if eprod != "none" else None),
+                          "sort_order": int(esort), "is_active": bool(eactive)}
+                if eimg:
+                    try:
+                        _edata["image_url"] = storage.upload_image(eimg)
+                        if _eb.get("image_url"):
+                            storage.delete_by_url(_eb["image_url"])
+                    except Exception as e:  # noqa: BLE001
+                        st.error(f"Image upload failed: {e}")
+                        st.stop()
+                db.update_banner(_eb["id"], _edata)
+                st.session_state.pop("editing_banner", None)
+                st.success("✅ Banner updated!")
+                st.rerun()
+            if _do_cancel:
+                st.session_state.pop("editing_banner", None)
+                st.rerun()
+            st.divider()
+
+    _all_prods = {p["id"]: p["name"] for p in db.get_products(active_only=False)}
     for b in db.get_banners(active_only=False):
         with st.container(border=True):
-            c1, c2 = st.columns([4, 1])
+            c1, c2 = st.columns([4, 2])
             with c1:
                 _pl = PLACEMENT_LABELS.get(b.get("placement") or "top", "top")
                 st.markdown(f"**[{b['banner_type']}] {b['title']}**")
+                _plink = _all_prods.get(b.get("product_id"))
                 st.caption(f"{_pl} | {b.get('subtitle','')} | "
-                           f"{'🟢 Active' if b['is_active'] else '🔴 Hidden'}")
+                           f"{'🟢 Active' if b['is_active'] else '🔴 Hidden'}"
+                           + (f" | 🔗 {_plink}" if _plink else ""))
             with c2:
-                if st.button("🔄 Toggle", key=f"bt_{b['id']}"):
+                if st.button("🔄 Toggle", key=f"bt_{b['id']}", use_container_width=True):
                     db.update_banner(b["id"], {"is_active": not b["is_active"]})
                     st.rerun()
-                if st.button("🗑️", key=f"bd_{b['id']}"):
+                if st.button("✏️ Edit", key=f"be_{b['id']}", use_container_width=True):
+                    st.session_state.editing_banner = b["id"]
+                    st.rerun()
+                if st.button("🗑️ Delete", key=f"bd_{b['id']}", use_container_width=True):
                     if b.get("image_url"):
                         storage.delete_by_url(b["image_url"])
                     db.delete_banner(b["id"])
