@@ -110,13 +110,14 @@ def banner_ad_html(b):
     )
 
 
-def star_rating_html(value=5, uid="rate"):
+def star_rating_html(value=0, uid="rate"):
     """Play Store style star rating: 5 stars ek line mein, hover par bright,
-    click par select. Click '?rsel=N' par le jata hai (same page reload),
+    click par select. Shuru mein koi star colored nahi (khali = bold black
+    outline). Click '?rsel=N' par le jata hai (same page reload),
     page 'rsel' ko session_state mein dal kar parhta hai."""
-    _v = max(1, min(5, int(value or 5)))
+    _v = max(0, min(5, int(value or 0)))
     _spans = "".join(
-        f"<span data-v='{i}' class='{'on' if i <= _v else ''}'>★</span>"
+        f"<span data-v='{i}' class='{'on' if 0 < i <= _v else ''}'>★</span>"
         for i in (5, 4, 3, 2, 1)
     )
     return f"""
@@ -124,10 +125,12 @@ def star_rating_html(value=5, uid="rate"):
 <style>
 .sk-stars {{ display: inline-flex; flex-direction: row-reverse; font-size: 42px;
              line-height: 1.2; cursor: pointer; user-select: none; -webkit-user-select: none; }}
-.sk-stars span {{ color: #6b6b6b; padding: 0 3px; transition: color .12s, text-shadow .12s; }}
-.sk-stars span.on {{ color: #ffb400; text-shadow: 0 0 14px rgba(255,180,0,.55); }}
+.sk-stars span {{ color: transparent; -webkit-text-stroke: 2.5px #111;
+                  padding: 0 3px; transition: color .12s, text-shadow .12s; }}
+.sk-stars span.on {{ color: #ffb400; -webkit-text-stroke: 0;
+                     text-shadow: 0 0 14px rgba(255,180,0,.55); }}
 .sk-stars span:hover, .sk-stars span:hover ~ span {{
-    color: #ffb400; text-shadow: 0 0 14px rgba(255,180,0,.55); }}
+    color: #ffb400; -webkit-text-stroke: 0; text-shadow: 0 0 14px rgba(255,180,0,.55); }}
 </style>
 <script>
 (function(){{
