@@ -10,6 +10,65 @@ from lib.utils import format_price, is_new, sale_price
 ui.public_header()
 
 
+# ---------------- quick buy: banner Shop Now → same page par buy (koi naya page nahi) ----------------
+def _clear_quickbuy():
+    try:
+        del st.query_params["quickbuy"]
+    except Exception:
+        pass
+
+
+_qb_id = st.query_params.get("quickbuy")
+if _qb_id:
+    _qp = db.get_product(_qb_id)
+    if _qp and _qp.get("is_active", True):
+        _qimgs = _qp.get("images") or []
+        _qstock = int(_qp.get("stock") or 0)
+        with st.container(border=True):
+            _qh1, _qh2 = st.columns([6, 1])
+            with _qh1:
+                st.markdown("### ⚡ Quick Buy")
+            with _qh2:
+                if st.button("✖", key=f"qb_x_{_qb_id}"):
+                    _clear_quickbuy()
+                    st.rerun()
+            _qc1, _qc2 = st.columns([1, 1.6])
+            with _qc1:
+                if _qimgs:
+                    st.image(_qimgs[0], use_container_width=True)
+            with _qc2:
+                st.markdown(f"**{_qp['name']}**")
+                st.markdown(f"## {format_price(sale_price(_qp))}")
+                if _qp.get("discount_price"):
+                    st.caption(f"~~{format_price(_qp['price'])}~~  🔥 Discount!")
+                if _qstock <= 0:
+                    st.error("Out of Stock")
+                elif _qstock <= 5:
+                    st.warning(f"⚡ Sirf {_qstock} reh gaye hain!")
+                _qqty = st.number_input("Quantity", min_value=1, max_value=max(_qstock, 1),
+                                        value=1, step=1, key=f"qb_qty_{_qb_id}")
+                _qb1, _qb2 = st.columns(2)
+                with _qb1:
+                    if st.button("🛒 Add to Cart", key=f"qb_add_{_qb_id}",
+                                 disabled=_qstock <= 0, use_container_width=True):
+                        _cart = st.session_state.get("cart", {})
+                        _cart[_qb_id] = _cart.get(_qb_id, 0) + int(_qqty)
+                        st.session_state.cart = _cart
+                        _clear_quickbuy()
+                        st.toast("✅ Cart mein add ho gaya", icon="🛒")
+                        st.rerun()
+                with _qb2:
+                    if st.button("⚡ Buy Now", key=f"qb_buy_{_qb_id}", type="primary",
+                                 disabled=_qstock <= 0, use_container_width=True):
+                        _cart = st.session_state.get("cart", {})
+                        _cart[_qb_id] = _cart.get(_qb_id, 0) + int(_qqty)
+                        st.session_state.cart = _cart
+                        _clear_quickbuy()
+                        st.switch_page("views/cart.py")
+    else:
+        _clear_quickbuy()
+
+
 # ---------------- banners: cinematic ad-style (top = auto carousel) ----------------
 def show_banners(placement):
     try:
