@@ -142,6 +142,12 @@ div[data-testid="stSegmentedControl"] { display: flex; justify-content: center; 
 /* related products: compact cards */
 .sk-card-name-sm { font-size: 13.5px !important; }
 .sk-rel-price .sk-price { font-size: 15px; }
+/* admin reply under a review */
+.sk-reply {
+    background: #f8f6ef; border-left: 4px solid #c9962e;
+    border-radius: 8px; padding: 10px 14px; margin: 8px 0 4px 0;
+    color: #1a1a1a; font-size: 14.5px;
+}
 @keyframes sk-shine {
     to { background-position: 220% center; }
 }
