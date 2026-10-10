@@ -10,26 +10,20 @@ from lib.utils import format_price, is_new, sale_price
 ui.public_header()
 
 
-# ---------------- banners (4 placements: top / middle / bottom / product) ----------------
-def _banner_html(b):
-    img = f"<img src='{b['image_url']}' class='sk-banner-img' />" if b.get("image_url") else ""
-    return (
-        f"<div class='sk-banner sk-banner-{b['banner_type']}'>{img}"
-        f"<div class='sk-banner-text'><div class='sk-banner-kicker'>"
-        f"{'🆕 NEW ARRIVAL' if b['banner_type']=='new' else ('🔥 DISCOUNT' if b['banner_type']=='discount' else '📢')}</div>"
-        f"<div class='sk-banner-title'>{b['title']}</div>"
-        f"<div class='sk-banner-sub'>{b.get('subtitle','')}</div></div></div>"
-    )
-
-
+# ---------------- banners: cinematic ad-style (top = auto carousel) ----------------
 def show_banners(placement):
     try:
         banners = db.get_banners(placement=placement, active_only=True)
     except Exception:
         # purani DB (placement column nahi) — sab kuch top par dikhao
         banners = db.get_banners(active_only=True) if placement == "top" else []
-    for b in banners:
-        st.markdown(_banner_html(b), unsafe_allow_html=True)
+    if not banners:
+        return
+    if placement == "top" and len(banners) > 1:
+        components.html(ui.banner_carousel_html(banners), height=372, scrolling=False)
+    else:
+        for b in banners:
+            st.markdown(ui.banner_ad_html(b), unsafe_allow_html=True)
 
 
 show_banners("top")
