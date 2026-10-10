@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 from lib import db, ui
 from lib.utils import format_price, is_new, sale_price, youtube_id
 
-ui.public_header()
+ui.public_header(active="product")
 
 # product-page wale banner ka Shop Now bhi View jaisa behave kare
 ui.handle_banner_goto()
@@ -236,5 +236,42 @@ if related:
                         st.session_state["view_pid"] = rp["id"]
                         st.query_params["p"] = rp["id"]
                         st.rerun()
+
+# ---------------- customer reviews ----------------
+st.divider()
+st.subheader("⭐ Customer Reviews")
+_revs = db.get_reviews(pid)
+if _revs:
+    _avg = sum(float(_r.get("rating") or 0) for _r in _revs) / len(_revs)
+    _full = int(round(_avg))
+    st.markdown(f"**{'⭐' * _full}{'☆' * (5 - _full)}  {_avg:.1f}/5**  ({len(_revs)} reviews)")
+    for _r in _revs:
+        with st.container(border=True):
+            _rf = int(_r.get("rating") or 0)
+            st.markdown(f"**{html.escape(_r.get('name') or 'Customer')}**  {'⭐' * _rf}")
+            if _r.get("comment"):
+                st.write(_r["comment"])
+            st.caption(f"📅 {(_r.get('created_at') or '')[:10]}")
+else:
+    st.caption("Abhi koi review nahi — sab se pehle aap likhein!")
+
+with st.form(f"rev_form_{pid}", clear_on_submit=True):
+    st.markdown("**✍️ Apna review likhein**")
+    _rname = st.text_input("Aapka naam *", placeholder="e.g. Ahmed")
+    _rrate = st.select_slider("Rating", options=[1, 2, 3, 4, 5], value=5,
+                              format_func=lambda x: "⭐" * x)
+    _rcomment = st.text_area("Review", placeholder="Product kaisa laga? Sachi rai dein.")
+    if st.form_submit_button("✅ Review Post Karo", type="primary"):
+        if not _rname.strip():
+            st.error("Naam zaroori hai.")
+            st.stop()
+        try:
+            db.create_review({"product_id": pid, "name": _rname.strip(),
+                              "rating": int(_rrate), "comment": _rcomment.strip()})
+        except Exception as e:  # noqa: BLE001
+            st.error(f"Review post nahi hua: {e}")
+            st.stop()
+        st.success("🎉 Shukriya! Aapka review post ho gaya.")
+        st.rerun()
 
 ui.public_footer()
